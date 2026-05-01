@@ -113,3 +113,23 @@ Add `.finn-thread` to `.gitignore` — it's personal state, not shared.
 - **A09 Logging Failures** — hook errors logged to `~/.finnisher/hook.log` with timestamps; never log to stdout in hooks (would corrupt agent output)
 - **A10 SSRF** — no outbound HTTP requests in MVP; if added later, allowlist domains explicitly
 
+### TypeScript
+- No `any` — use `unknown` + type narrowing at boundaries; proper interfaces over type aliases for objects
+- Strict null checks on — handle `undefined` / `null` explicitly, never assume presence
+- No type assertions (`as X`) except at validated parse boundaries (e.g. JSON.parse result)
+
+### Accessibility (Web Dashboard)
+- All interactive elements reachable by keyboard; focus ring visible
+- Colour is never the sole indicator (pair badges with text labels)
+- `aria-label` on icon-only buttons
+
+### Dependencies
+- Add a dependency only when it earns its weight — prefer built-ins first
+- No transitive dependency pinning unless a known CVE forces it
+- Run `npm audit` before every merge to main; block on high/critical
+
+### Commit Messages
+- Format: `type(scope): short description` — types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`
+- Body explains *why*, not *what* — the diff already shows what changed
+- One logical change per commit — don't bundle unrelated fixes
+
