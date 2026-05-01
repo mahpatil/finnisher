@@ -89,3 +89,27 @@ Add `.finn-thread` to `.gitignore` — it's personal state, not shared.
 - Think reliability and failure scenarios — every hook must exit 0, every error must be caught and logged
 - Use Chrome (via browser automation) to test UI features yourself before marking them done
 
+## Code Quality Standards (SonarSource)
+
+### Complexity
+- **Cognitive complexity ≤ 15 per function** — if a function exceeds this, split it into smaller focused helpers
+- Keep cyclomatic complexity low: avoid deep nesting (max 3 levels), prefer early returns over nested conditionals
+- Each function does one thing — if you need "and" to describe it, split it
+
+### Duplication
+- **Code duplication < 3%** — before writing new code, search for an existing implementation to extend
+- Extract any block repeated 3+ times into a shared utility in `src/db/` (data logic) or `src/cli/ui/format.ts` (output logic)
+- No copy-paste between hook handlers — shared logic goes in `src/hooks/common.ts`
+
+### Security (OWASP Top 10)
+- **A01 Broken Access Control** — DB file at `~/.finnisher/db.sqlite` is user-local; no multi-user access, no API auth needed for local web server
+- **A02 Cryptographic Failures** — no sensitive data stored; thread titles/notes are plaintext by design
+- **A03 Injection** — use Drizzle ORM parameterised queries only; never concatenate user input into raw SQL strings
+- **A04 Insecure Design** — validate all external inputs at system boundaries: CLI args (Commander), hook stdin JSON (parse with try/catch), API request bodies (check required fields before DB write)
+- **A05 Security Misconfiguration** — `finn web` binds to `localhost` only; never `0.0.0.0`
+- **A06 Vulnerable Components** — run `npm audit` before each release; fail CI if high/critical vulnerabilities present
+- **A07 Auth Failures** — n/a (local-only tool, no auth layer)
+- **A08 Software Integrity** — `package-lock.json` committed; no `--ignore-scripts` bypass in install pipeline
+- **A09 Logging Failures** — hook errors logged to `~/.finnisher/hook.log` with timestamps; never log to stdout in hooks (would corrupt agent output)
+- **A10 SSRF** — no outbound HTTP requests in MVP; if added later, allowlist domains explicitly
+
