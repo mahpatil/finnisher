@@ -71,3 +71,20 @@ Any project can link to a thread by placing a `.finn-thread` file in the root:
 echo "abc123xyz" > .finn-thread
 ```
 Add `.finn-thread` to `.gitignore` — it's personal state, not shared.
+
+## Development Workflow
+1. Check spec exists in `docs/specs/` — if not, create one with `/opsx:propose`
+2. Review the spec, then create a feature branch for the work
+3. Implement using TDD: `/opsx:apply <spec-file>`
+4. After completing each significant chunk of work, commit and push immediately — do not wait until the end
+5. Run all tests
+6. Review the implemented code
+7. Request necessary changes if anything is off
+8. **Commit discipline:** After finishing any feature, fix, or meaningful unit of work — commit with a clear message and push. Do not let changes accumulate without committing.
+
+## Principles
+- Always use TDD — write tests first, make them pass, then refactor
+- Write UI tests using Playwright
+- Reduce code duplication — shared logic lives in `src/db/` or `src/cli/ui/`
+- Think reliability and failure scenarios — every hook must exit 0, every error must be caught and logged
+- Use Chrome (via browser automation) to test UI features yourself before marking them done
