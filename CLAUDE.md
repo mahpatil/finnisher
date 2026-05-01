@@ -88,3 +88,4 @@ Add `.finn-thread` to `.gitignore` — it's personal state, not shared.
 - Reduce code duplication — shared logic lives in `src/db/` or `src/cli/ui/`
 - Think reliability and failure scenarios — every hook must exit 0, every error must be caught and logged
 - Use Chrome (via browser automation) to test UI features yourself before marking them done
+
