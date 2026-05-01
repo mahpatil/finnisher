@@ -17,10 +17,11 @@ Builds on Phase 1 (Core DB). All DB calls come from `@finnisher/core` (the `src/
 - [ ] Given `finn list --state waiting`, then only threads with `state === 'waiting'` are shown
 - [ ] Given `finn add` is run interactively, then it prompts for title, next action, owner, and state in sequence; on completion the thread is created and its ID printed
 - [ ] Given `finn add --title "X" --next "Y"`, then the thread is created non-interactively with defaults (owner=you, state=active)
-- [ ] Given `finn add` would exceed 5 active threads, then it prints the application error clearly and exits 1
+- [ ] Given creating a thread results in 6+ active threads, then the thread is created AND a focus warning block is printed showing count, level, and the top suggested threads to close or park
+- [ ] Given `finn list`, then if `overloadWarning` is non-null, a warning banner is printed above the thread table with suggestions
 - [ ] Given `finn next <id> <action>`, then `nextAction` is updated, a confirmation line is printed, and exit is 0
-- [ ] Given `finn done <id>`, then state is set to done, and a summary line with time-to-completion is printed
-- [ ] Given `finn status <id> <state>`, then state transitions correctly; if transitioning to active would exceed 5, prints error and exits 1
+- [ ] Given `finn done <id>`, then state is set to done, a summary line with time-to-completion is printed, and if a focus warning existed it recalculates and shows updated count
+- [ ] Given `finn status <id> <state>`, then state transitions correctly; if transitioning to active triggers a focus warning, prints it after the confirmation
 - [ ] Given `finn sessions`, then a table of the 20 most recent sessions is printed with: agent, duration, tokens in/out, cost, branch, last commit, unpushed count
 - [ ] Given `finn sessions --thread <id>`, then only sessions for that thread are shown
 - [ ] Given `finn touch <id>`, then it runs silently (no stdout), always exits 0, including when the thread does not exist
@@ -44,11 +45,24 @@ Each exports `register(program: Command): void`.
 
 **Output helpers:** `src/cli/ui/format.ts`
 ```typescript
-export function stateBadge(state: ThreadState): string   // chalk-colored pill
-export function stalledBadge(): string                   // chalk red '⚠ STALLED'
-export function durationStr(ms: number): string          // "2h 14m"
-export function costStr(usd: number | null): string      // "$0.12" or "—"
+export function stateBadge(state: ThreadState): string        // chalk-colored pill
+export function stalledBadge(): string                        // chalk red '⚠ STALLED'
+export function durationStr(ms: number): string               // "2h 14m"
+export function costStr(usd: number | null): string           // "$0.12" or "—"
+export function printFocusWarning(w: FocusWarning): void      // prints warning block
 ```
+
+**Focus warning output format (`printFocusWarning`):**
+```
+⚠  6 active threads — above the 5-thread focus ideal. Consider closing these:
+
+  → abc123xyz  "Ship Rust prototype"       last touched 3d ago  (stalled)
+  → def456uvw  "Write TokenOps article"    last touched 2d ago
+  → ghi789rst  "CTO interview prep"        last touched 1d ago
+
+  Run: finn done <id>   or   finn status <id> waiting
+```
+For `urgent` level, uses red chalk and `⛔` instead of `⚠`.
 
 ### Key Logic
 
@@ -83,18 +97,20 @@ Duration = `endedAt - startedAt`; if `endedAt` is null, show `running`.
 4. `finn next <id> "Review PR"` → prints `✓ Next action updated`
 5. `finn done <id>` → prints `✓ Done. Completed in 2h 14m`
 6. `finn sessions` → shows table (may be empty on fresh install)
+7. `finn add` with 5 already active → 6th thread created, then focus warning printed with top 3 suggestions
 
 ### Edge Cases
 1. `finn list --state done` → shows only completed threads
 2. `finn touch nonexistent-id` → silent, exit 0
 3. `finn add` → Ctrl-C mid-flow → "Cancelled." exit 0
 4. `finn sessions --thread <id>` with no sessions → empty table, exit 0
+5. `finn list` with 9 active threads → urgent red warning banner above table
+6. `finn done <id>` drops count from 6 to 5 → no warning shown after
 
 ### Error Cases
-1. `finn add --title "X" --next "Y"` when 5 active threads exist → `Error: Max 5 active threads reached...` exit 1
-2. `finn next nonexistent "action"` → `Error: Thread not found: <id>` exit 1
-3. `finn done nonexistent` → `Error: Thread not found: <id>` exit 1
-4. `finn status <id> invalid-state` → Commander validation error, exit 1
+1. `finn next nonexistent "action"` → `Error: Thread not found: <id>` exit 1
+2. `finn done nonexistent` → `Error: Thread not found: <id>` exit 1
+3. `finn status <id> invalid-state` → Commander validation error, exit 1
 
 ## Out of Scope
 - `finn web` full implementation — Phase 4

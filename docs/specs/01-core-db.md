@@ -5,7 +5,7 @@
 **Date**: 2026-05-01
 
 ## Problem
-Finnisher needs a persistent, synchronous data layer shared between the `finn` CLI and the `finn web` local server. Without it, no other phase (CLI, hooks, dashboard) can be built. The DB must enforce the system's core invariant — max 5 active threads — and provide accurate stalled detection without any background daemon.
+Finnisher needs a persistent, synchronous data layer shared between the `finn` CLI and the `finn web` local server. Without it, no other phase (CLI, hooks, dashboard) can be built. The DB must surface focus warnings (never hard blocks) when active threads exceed 5, provide prioritization signals, and compute stalled detection without any background daemon.
 
 ## Context
 New project — no existing code. Data lives at `~/.finnisher/db.sqlite`. Both the CLI (a Node.js binary) and the Next.js web server run in the same Node.js runtime, making synchronous `better-sqlite3` the right fit (no async impedance mismatch, no connection pooling needed). Drizzle ORM provides type-safe query building and migration management via `drizzle-kit`.
@@ -13,8 +13,9 @@ New project — no existing code. Data lives at `~/.finnisher/db.sqlite`. Both t
 ## Acceptance Criteria
 
 - [ ] Given the DB file does not exist, when any DB function is called for the first time, then `~/.finnisher/` is created and `db.sqlite` is initialized with the correct schema
-- [ ] Given a thread is created with `state: 'active'` and 4 active threads already exist, when `createThread` is called, then it succeeds and the thread is persisted
-- [ ] Given 5 active threads exist, when `createThread({ state: 'active' })` is called, then it throws with a descriptive error message (not a DB error — an application error)
+- [ ] Given a thread is created with `state: 'active'` regardless of how many active threads exist, when `createThread` is called, then it always succeeds and the thread is persisted
+- [ ] Given `activeThreadCount()` returns a count, when `overloadWarning(count)` is called, then: ≤5 returns `null`; 6–8 returns a `{ level: 'caution', message, suggestions }` object; 9+ returns `{ level: 'urgent', message, suggestions }`
+- [ ] Given `overloadWarning` returns suggestions, then `suggestions` is an array of thread IDs sorted by: stalled first, then waiting, then oldest `updatedAt` — these are the candidates to close or park
 - [ ] Given a thread exists, when `touchThread(id)` is called and the thread state is not `done`, then `updatedAt` is bumped to now and no other fields change
 - [ ] Given a thread has `state: 'done'`, when `touchThread(id)` is called, then the call is a no-op (updatedAt does not change)
 - [ ] Given a thread's `updatedAt` is more than 48 hours ago and state is not `done`, when `isStalled(thread)` is called, then it returns `true`
@@ -110,16 +111,38 @@ export function getOpenSessions(): Session[]     // endedAt IS NULL
 
 ### Key Logic
 
-**5-active enforcement** (in `createThread`):
+**Focus warning** (new export in `src/db/threads.ts`):
 ```typescript
-if (input.state === 'active') {
-  const count = db.select().from(threads).where(eq(threads.state, 'active')).all().length
-  if (count >= 5) throw new Error(
-    `Max 5 active threads reached. Complete or move one to waiting first.`
-  )
+export type WarningLevel = 'caution' | 'urgent'
+export interface FocusWarning {
+  level: WarningLevel
+  count: number
+  message: string
+  suggestions: Thread[]  // candidates to complete or park, in priority order
+}
+
+export function activeThreadCount(): number
+
+export function overloadWarning(threads: Thread[]): FocusWarning | null {
+  const active = threads.filter(t => t.state === 'active')
+  const count = active.length
+  if (count <= 5) return null
+
+  // Prioritise: stalled first, then waiting-adjacent (least recently updated)
+  const suggestions = [...active]
+    .sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime())
+
+  return {
+    level: count >= 9 ? 'urgent' : 'caution',
+    count,
+    message: count >= 9
+      ? `⛔ ${count} active threads — focus is critically scattered. Finish or park these first:`
+      : `⚠  ${count} active threads — above the 5-thread focus ideal. Consider closing these:`,
+    suggestions: suggestions.slice(0, 3),
+  }
 }
 ```
-Same check in `updateState` when transitioning any thread → `'active'`.
+`createThread` and `updateState` never throw for count reasons — callers receive the warning separately.
 
 **Stalled detection** (pure function, no DB call):
 ```typescript
@@ -144,20 +167,21 @@ sqlite.pragma('foreign_keys = ON')
 2. Call `listThreads()` → returns the created thread
 3. Call `touchThread(id)` → `updatedAt` advances, all other fields unchanged
 4. Call `updateState(id, 'done')` → `state === 'done'`, `completedAt` is set
-5. Create 4 more active threads (total 5) → all succeed
-6. Call `runMigrations()` twice → no error on second call
+5. Create 4 more active threads (total 5) → all succeed, `overloadWarning` returns `null`
+6. Create a 6th active thread → succeeds, `overloadWarning` returns `{ level: 'caution', count: 6, suggestions: [<oldest thread>] }`
+7. Call `runMigrations()` twice → no error on second call
 
 ### Edge Cases
 1. `touchThread` on a `done` thread → updatedAt unchanged (SQL WHERE filters it out)
 2. Thread with `updatedAt` exactly at 48h boundary → `isStalled` returns `false` (strict `>`)
 3. `createSession({ threadId: null, agent: 'manual', startedAt: new Date() })` → valid, no FK error
 4. `closeSession` with partial data → only provided fields updated, others remain NULL
+5. `overloadWarning` with 9 active threads → `level: 'urgent'`, top 3 oldest suggested
+6. `overloadWarning` with 5 active threads → returns `null`
 
 ### Error Cases
-1. `createThread({ state: 'active' })` when 5 active threads exist → throws `"Max 5 active threads reached..."`
-2. `updateState(id, 'active')` when 5 active threads exist → throws same error
-3. `createThread({ title: '', nextAction: '' })` with empty strings → DB accepts (no CHECK constraint); validation is CLI's responsibility
-4. `getThread('nonexistent')` → returns `undefined`, does not throw
+1. `createThread({ title: '', nextAction: '' })` with empty strings → DB accepts (no CHECK constraint); validation is CLI's responsibility
+2. `getThread('nonexistent')` → returns `undefined`, does not throw
 
 ## Out of Scope
 - CLI output formatting — this spec covers DB layer only

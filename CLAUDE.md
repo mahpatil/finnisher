@@ -20,7 +20,7 @@ finnisher/
 **Data:** `~/.finnisher/db.sqlite` (shared by CLI + web, WAL mode)
 
 ## Key Constraints
-- Max **5 active threads** — enforced in `src/db/threads.ts`, throw on violation
+- **5 active threads = the focus ideal** — the system warns (never blocks) when exceeded; warns get more urgent as count grows; system actively helps user prioritize and close threads
 - Stalled detection: `Date.now() - updatedAt > 48h` — computed at read time, no daemon
 - `nextAction` is non-nullable — every thread must have one
 - All hooks exit 0 always — never block Claude or git

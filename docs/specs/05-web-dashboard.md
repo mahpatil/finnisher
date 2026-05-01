@@ -15,8 +15,10 @@ Builds on all previous phases. Next.js 15 App Router runs inside the `src/web/` 
 - [ ] Given `finn web` is run, then Next.js starts and the dashboard is accessible at `http://localhost:3141`
 - [ ] Given the dashboard loads, then the Active tab is shown by default with all active threads
 - [ ] Given an active thread has `isStalled === true`, then it shows a red stalled warning in its card
-- [ ] Given 5 active threads exist, then the Active tab header shows "Active (5/5)" and the Add button is disabled with tooltip "Max 5 active threads"
-- [ ] Given fewer than 5 active threads exist, then a visible "Add Thread" button is shown on the Active tab
+- [ ] Given active thread count is ≤5, then the Active tab header shows "Active (N/5)" with no warning
+- [ ] Given active thread count is 6–8, then a yellow caution banner appears at the top of the Active tab listing the top 3 suggested threads to close or park, with one-click "Mark Done" and "Set Waiting" actions on each suggestion
+- [ ] Given active thread count is 9+, then the banner is red/urgent with stronger copy and the same one-click actions
+- [ ] The "Add Thread" button is always visible and always enabled — the system never prevents adding threads
 - [ ] Given a thread card's "Mark Done" button is clicked, then the thread moves out of Active and into Done tab within one 5s poll cycle
 - [ ] Given the "Set Waiting" button is clicked on an active thread card, then the thread moves to Waiting tab
 - [ ] Given "Edit Next Action" is clicked, then an inline edit field appears; on save the next action is updated
@@ -87,6 +89,18 @@ const { data: sessions } = useSWR('/api/sessions', fetcher, { refreshInterval: 5
 ```
 
 ### Key Logic
+
+**Focus warning banner (Active tab):**
+```
+FocusWarningBanner.tsx
+  props: warning: FocusWarning   (from /api/threads response)
+  - caution: yellow bg, ⚠ icon
+  - urgent:  red bg,    ⛔ icon
+  - lists top 3 suggestion threads with inline "Done" + "Park" buttons
+  - "Park" → PATCH state: 'waiting'
+  - collapses/dismisses until next poll refreshes state
+```
+API: `GET /api/threads` response includes `focusWarning: FocusWarning | null` computed server-side.
 
 **Thread card actions:**
 - **Mark Done** → `PATCH /api/threads/[id]` `{ state: 'done' }`

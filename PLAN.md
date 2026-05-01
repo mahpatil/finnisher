@@ -40,7 +40,8 @@ openFiles (JSON) · projectPath
 ```
 
 **Business rules:**
-- Max 5 `active` threads — throws descriptive error on violation
+- 5 active threads = focus ideal — system warns but never blocks; warning severity escalates with count
+- `overloadWarning(count)` returns null (≤5), yellow caution (6–8), red urgent (9+) with prioritization suggestions
 - Stalled: `Date.now() - updatedAt > 48h` — computed at read time, no daemon
 - All hooks exit 0 — never block Claude or git
 
