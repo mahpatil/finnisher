@@ -96,6 +96,29 @@ describe('listSessions', () => {
   })
 })
 
+describe('createSession with repo context fields', () => {
+  it('persists folderName and githubUrl when provided', async () => {
+    const { createSession, listSessions } = await setup()
+    createSession({
+      agent: 'claude_code',
+      startedAt: new Date(),
+      folderName: 'finnisher',
+      githubUrl: 'https://github.com/mahpatil/finnisher',
+    })
+    const s = listSessions()[0]!
+    expect(s.folderName).toBe('finnisher')
+    expect(s.githubUrl).toBe('https://github.com/mahpatil/finnisher')
+  })
+
+  it('accepts null for both repo context fields', async () => {
+    const { createSession, listSessions } = await setup()
+    createSession({ agent: 'manual', startedAt: new Date(), folderName: null, githubUrl: null })
+    const s = listSessions()[0]!
+    expect(s.folderName).toBeNull()
+    expect(s.githubUrl).toBeNull()
+  })
+})
+
 describe('getOpenSessions', () => {
   it('returns only sessions where endedAt is null', async () => {
     const { createSession, closeSession, getOpenSessions } = await setup()
