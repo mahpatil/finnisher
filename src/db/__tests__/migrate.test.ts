@@ -36,6 +36,27 @@ describe('runMigrations', () => {
     rmSync(join(dbPath, '..'), { recursive: true })
   })
 
+  it('creates folder_name and github_url columns on sessions', async () => {
+    const dbPath = tempDbPath()
+    process.env['FINNISHER_DB_PATH'] = dbPath
+    vi.resetModules()
+
+    const { runMigrations } = await import('../migrate.js')
+    runMigrations()
+
+    const { getSqlite } = await import('../db.js')
+    const cols = getSqlite()
+      .prepare("PRAGMA table_info(sessions)")
+      .all() as { name: string }[]
+    const names = cols.map(c => c.name)
+    expect(names).toContain('folder_name')
+    expect(names).toContain('github_url')
+
+    const { _resetDb } = await import('../db.js')
+    _resetDb()
+    rmSync(join(dbPath, '..'), { recursive: true })
+  })
+
   it('is idempotent — calling twice does not throw', async () => {
     const dbPath = tempDbPath()
     process.env['FINNISHER_DB_PATH'] = dbPath

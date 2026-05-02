@@ -31,6 +31,8 @@ export const sessions = sqliteTable('sessions', {
   unpushedCount: integer('unpushed_count'),
   openFiles:     text('open_files'),
   projectPath:   text('project_path'),
+  folderName:    text('folder_name'),
+  githubUrl:     text('github_url'),
 })
 
 export type Thread     = typeof threads.$inferSelect
