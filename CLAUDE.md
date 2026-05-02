@@ -89,6 +89,19 @@ Add `.finn-thread` to `.gitignore` — it's personal state, not shared.
 - Think reliability and failure scenarios — every hook must exit 0, every error must be caught and logged
 - Use Chrome (via browser automation) to test UI features yourself before marking them done
 
+## Claude models
+Tell Claude to spawn subagents and pick the cheapest model that can handle the job:
+
+- Haiku: bulk mechanical tasks, no judgment needed
+- Sonnet: scoped research, code exploration, synthesis
+- Opus: only when real planning or tradeoffs are involved
+Set two caps:
+- Haiku never spawns further subagents (if it needs to, the task was wrong-sized)
+- Max spawn depth is 2 (parent → subagent → one more tier)
+
+If a subagent realizes it needs a smarter model, it returns to the parent instead of escalating on its own
+
+
 ## Code Quality Standards (SonarSource)
 
 ### Complexity
