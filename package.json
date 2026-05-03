@@ -11,7 +11,7 @@
     "install.sh"
   ],
   "scripts": {
-    "build": "tsc && cp -r src/db/migrations dist/db/migrations",
+    "build": "tsc && cp -r src/db/migrations/. dist/db/migrations/",
     "postinstall": "chmod +x dist/cli/index.js 2>/dev/null || true",
     "dev": "next dev --port 3141 src/web",
     "test": "vitest run",
