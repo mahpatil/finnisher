@@ -1,5 +1,7 @@
 import { eq, ne, and, count } from 'drizzle-orm'
-import { nanoid } from 'nanoid'
+import { customAlphabet } from 'nanoid'
+
+const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10)
 import { getDb } from './db.js'
 import { threads, type Thread, type NewThread, type ThreadState } from './schema.js'
 

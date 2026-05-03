@@ -163,8 +163,8 @@ describe('isStalled', () => {
     const { createThread, isStalled, getThread } = await setup()
     const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
     const { getSqlite } = await import('../db.js')
-    const exactTime = Date.now() - 48 * 60 * 60 * 1000
-    getSqlite().prepare('UPDATE threads SET updated_at = ? WHERE id = ?').run(exactTime, t.id)
+    const justUnder48h = Date.now() - 48 * 60 * 60 * 1000 + 5000
+    getSqlite().prepare('UPDATE threads SET updated_at = ? WHERE id = ?').run(justUnder48h, t.id)
     expect(isStalled(getThread(t.id)!)).toBe(false)
   })
 

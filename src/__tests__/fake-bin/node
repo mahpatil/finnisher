@@ -1,0 +1,11 @@
+#!/bin/sh
+# Fake node binary for testing old-version rejection
+VERSION="${FAKE_NODE_VERSION:-16}"
+if echo "$@" | grep -q "process.versions.node"; then
+  printf "$VERSION"
+elif echo "$@" | grep -q "\-\-version"; then
+  echo "v$VERSION.0.0"
+else
+  # Fall through to real node for other invocations
+  exec "$(command -v node)" "$@"
+fi

@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 import { runMigrations } from '@db/migrate'
 import { getDb } from '@db/db'
 import { threads } from '@db/schema'
-import { nanoid } from 'nanoid'
+import { customAlphabet } from 'nanoid'
+
+const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10)
 
 runMigrations()
 

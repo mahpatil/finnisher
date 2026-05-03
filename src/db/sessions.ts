@@ -1,5 +1,7 @@
 import { eq, isNull } from 'drizzle-orm'
-import { nanoid } from 'nanoid'
+import { customAlphabet } from 'nanoid'
+
+const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10)
 import { getDb } from './db.js'
 import { sessions, type Session, type NewSession } from './schema.js'
 
