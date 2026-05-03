@@ -2,7 +2,7 @@
 
 > **Turn everything you start into something you finish.**
 
-Finnisher is a personal execution momentum tracker. It logs **Threads** (units of outcome) and **Sessions** (AI agent work sessions across Claude Code, Codex, OpenCode) into a local SQLite database — giving you a dashboard of what's moving, what's stalled, and what each agent session actually cost.
+**Finnisher** is a personal execution momentum tracker. It logs **Threads** (units of outcome) and **Sessions** (AI agent work sessions across Claude Code, Codex, OpenCode) into a local SQLite database — giving you a dashboard of what's moving, what's stalled, and what each agent session actually cost.
 
 ---
 
