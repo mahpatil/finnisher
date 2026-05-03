@@ -3,6 +3,31 @@ import { basename, join } from 'path'
 import { appendFileSync, readFileSync } from 'fs'
 import { homedir } from 'os'
 
+export interface GitState {
+  gitBranch: string | null
+  lastCommitSha: string | null
+  lastCommitMsg: string | null
+  unpushedCount: number | null
+}
+
+export function captureGitState(cwd: string): GitState {
+  const execGit = (cmd: string): string | null => {
+    try {
+      return execSync(cmd, { cwd, stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf8' }).trim()
+    } catch {
+      return null
+    }
+  }
+
+  const gitBranch = execGit('git rev-parse --abbrev-ref HEAD')
+  const lastCommitSha = execGit('git rev-parse HEAD')
+  const lastCommitMsg = execGit('git log -1 --format=%s')
+  const unpushedRaw = execGit('git rev-list @{u}.. --count')
+  const unpushedCount = unpushedRaw !== null ? parseInt(unpushedRaw, 10) : null
+
+  return { gitBranch, lastCommitSha, lastCommitMsg, unpushedCount }
+}
+
 const LOG_PATH = join(homedir(), '.finnisher', 'hook.log')
 
 export function appendHookLog(message: string): void {
