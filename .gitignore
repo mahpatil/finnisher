@@ -5,3 +5,7 @@ dist/
 *.sqlite-shm
 .finn-thread
 .env
+.next/
+src/web/.next/
+test-results/
+playwright-report/

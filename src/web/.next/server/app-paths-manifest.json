@@ -1,6 +1,0 @@
-{
-  "/api/sessions/seed/route": "app/api/sessions/seed/route.js",
-  "/api/sessions/route": "app/api/sessions/route.js",
-  "/page": "app/page.js",
-  "/sessions/page": "app/sessions/page.js"
-}
