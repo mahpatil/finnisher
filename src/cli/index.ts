@@ -9,6 +9,8 @@ import { register as registerStatus } from './commands/status.js'
 import { register as registerSessions } from './commands/sessions.js'
 import { register as registerTouch } from './commands/touch.js'
 import { register as registerWeb } from './commands/web.js'
+import { register as registerHook } from './commands/hook.js'
+import { register as registerSetup } from './commands/setup.js'
 
 runMigrations()
 
@@ -25,5 +27,7 @@ registerStatus(program)
 registerSessions(program)
 registerTouch(program)
 registerWeb(program)
+registerHook(program)
+registerSetup(program)
 
 program.parse()

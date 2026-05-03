@@ -5,5 +5,6 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     isolate: true,
+    exclude: ['e2e/**', 'node_modules/**'],
   },
 })

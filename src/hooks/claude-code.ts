@@ -1,20 +1,22 @@
 import { appendHookLog, captureGitState, getFolderName, getGithubUrl, getThreadId } from './common.js'
 import { closeSession, createSession, getOpenSessions } from '../db/sessions.js'
 
-export function handleClaudeStart(payload: unknown): void {
+export function handleClaudeStart(payload: unknown, cwd?: string): void {
   void payload
   try {
-    const cwd = process.env['CLAUDE_PROJECT_DIR'] ?? process.cwd()
-    const githubUrl = getGithubUrl(cwd)
-    const folderName = getFolderName(cwd)
-    const threadId = getThreadId(cwd)
+    const dir = cwd ?? process.env['CLAUDE_PROJECT_DIR'] ?? process.cwd()
+    const existing = getOpenSessions().find(s => s.agent === 'claude_code' && s.projectPath === dir)
+    if (existing) return
+    const githubUrl = getGithubUrl(dir)
+    const folderName = getFolderName(dir)
+    const threadId = getThreadId(dir)
     const session = createSession({
       agent: 'claude_code',
       startedAt: new Date(),
       githubUrl,
       folderName,
       threadId,
-      projectPath: cwd,
+      projectPath: dir,
     })
     appendHookLog(`claude-start: created session ${session.id} folder=${folderName ?? 'null'}`)
   } catch (err) {
@@ -22,7 +24,7 @@ export function handleClaudeStart(payload: unknown): void {
   }
 }
 
-export function handleClaudeStop(raw: string): void {
+export function handleClaudeStop(raw: string, cwd?: string): void {
   try {
     let parsed: unknown
     try {
@@ -32,14 +34,16 @@ export function handleClaudeStop(raw: string): void {
       return
     }
 
-    const openSession = getOpenSessions().find(s => s.agent === 'claude_code')
+    const openSession = getOpenSessions().find(
+      s => s.agent === 'claude_code' && (!cwd || s.projectPath === cwd),
+    ) ?? getOpenSessions().find(s => s.agent === 'claude_code')
     if (!openSession) {
       appendHookLog('claude-stop: no open claude_code session found')
       return
     }
 
-    const cwd = openSession.projectPath ?? process.cwd()
-    const gitState = captureGitState(cwd)
+    const projectPath = cwd ?? openSession.projectPath ?? process.cwd()
+    const gitState = captureGitState(projectPath)
 
     let tokensIn: number | null = null
     let tokensOut: number | null = null
@@ -48,6 +52,10 @@ export function handleClaudeStop(raw: string): void {
     if (parsed !== null && typeof parsed === 'object') {
       const p = parsed as Record<string, unknown>
       if (typeof p['totalCostUSD'] === 'number') costUsd = p['totalCostUSD']
+      // flat format: { tokensIn, tokensOut }
+      if (typeof p['tokensIn'] === 'number') tokensIn = p['tokensIn']
+      if (typeof p['tokensOut'] === 'number') tokensOut = p['tokensOut']
+      // nested format: { usage: { input_tokens, output_tokens } }
       const usage = p['usage']
       if (usage !== null && typeof usage === 'object') {
         const u = usage as Record<string, unknown>
