@@ -1,7 +1,7 @@
 # Spec: CLI Commands (`finn`)
 
 **Issue**: n/a
-**Status**: Draft
+**Status**: Done
 **Date**: 2026-05-01
 
 ## Problem

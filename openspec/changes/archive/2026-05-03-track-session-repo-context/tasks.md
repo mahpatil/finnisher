@@ -19,15 +19,15 @@
 - [x] 3.5 Write tests: HTTPS remote, SSH remote, no remote, non-repo directory
 - [x] 3.6 Add `getFolderName(projectPath: string | null): string | null` helper — `path.basename(projectPath)` or null
 
-## 4. Hook Integration *(deferred — Phase 3)*
+## 4. Hook Integration
 
-- [ ] 4.1 Update Claude Code session-start logic to call `getGithubUrl(cwd)` and `getFolderName(cwd)` and pass to `createSession`
-- [ ] 4.2 Repeat for Codex and OpenCode hook handlers
+- [x] 4.1 Update Claude Code session-start logic to call `getGithubUrl(cwd)` and `getFolderName(cwd)` and pass to `createSession`
+- [x] 4.2 Repeat for Codex and OpenCode hook handlers
 
-## 5. CLI Output *(deferred — Phase 2)*
+## 5. CLI Output
 
-- [ ] 5.1 Add `Folder` column to `finn sessions` table output (show `folderName` or `"—"`)
-- [ ] 5.2 Add `Repo` column to `finn sessions` table output (show truncated `githubUrl` or `"—"`)
+- [x] 5.1 Add `Folder` column to `finn sessions` table output (show `folderName` or `"—"`)
+- [x] 5.2 Add `Repo` column to `finn sessions` table output (show truncated `githubUrl` or `"—"`)
 
 ## 6. Web Dashboard *(deferred — Phase 5)*
 
