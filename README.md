@@ -13,9 +13,9 @@ Finnisher is a personal execution momentum tracker. It logs **Threads** (units o
 curl -fsSL https://raw.githubusercontent.com/mahpatil/finnisher/main/install.sh | sh
 ```
 
-### npm global
+### npm (direct from GitHub, no registry needed)
 ```bash
-npm install -g finnisher
+npm install -g github:mahpatil/finnisher
 finn setup
 ```
 
