@@ -19,6 +19,11 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.10.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.0.0",
+    "@mui/material": "^9.0.0",
+    "@mui/material-nextjs": "^9.0.0",
     "better-sqlite3": "^11.0.0",
     "chalk": "^5.4.0",
     "cli-table3": "^0.6.5",
@@ -27,7 +32,8 @@
     "nanoid": "^5.0.0",
     "next": "^15.5.15",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "swr": "^2.4.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

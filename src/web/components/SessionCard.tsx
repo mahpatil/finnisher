@@ -1,5 +1,11 @@
 'use client'
 
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Box from '@mui/material/Box'
+import Chip from '@mui/material/Chip'
+import Typography from '@mui/material/Typography'
+
 export interface SessionData {
   id: string
   agent: string
@@ -24,40 +30,92 @@ function durationStr(startedAt: string, endedAt: string | null): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
+const agentLabel: Record<string, string> = {
+  claude_code: 'Claude',
+  codex: 'Codex',
+  opencode: 'OpenCode',
+  manual: 'Manual',
+}
+
+const agentColor: Record<string, 'secondary' | 'success' | 'info' | 'default'> = {
+  claude_code: 'secondary',
+  codex: 'success',
+  opencode: 'info',
+  manual: 'default',
+}
+
 export function SessionCard({ session }: { session: SessionData }) {
+  const duration = durationStr(session.startedAt, session.endedAt)
+  const running = !session.endedAt
+
   return (
-    <div data-testid="session-card" style={{ border: '1px solid #ccc', padding: '12px', marginBottom: '8px', borderRadius: '6px' }}>
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
-        <span data-testid="agent-badge" style={{ background: '#e2e8f0', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 600 }}>
-          {session.agent}
-        </span>
-        <span style={{ fontSize: '12px', color: '#666' }}>{durationStr(session.startedAt, session.endedAt)}</span>
-        {session.folderName && (
-          <span data-testid="folder-badge" style={{ background: '#dbeafe', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>
-            {session.folderName}
-          </span>
+    <Card data-testid="session-card" variant="outlined" sx={{ mb: 1 }}>
+      <CardContent sx={{ pb: '12px !important' }}>
+        <Box display="flex" gap={1} alignItems="center" mb={0.5} flexWrap="wrap">
+          <Chip
+            data-testid="agent-badge"
+            label={agentLabel[session.agent] ?? session.agent}
+            size="small"
+            color={agentColor[session.agent] ?? 'default'}
+          />
+          <Typography variant="caption" sx={{ color: running ? '#16a34a' : '#666' }}>
+            {running ? '● running' : duration}
+          </Typography>
+          {session.folderName && (
+            <Chip
+              data-testid="folder-badge"
+              label={session.folderName}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
+          )}
+        </Box>
+        <Box display="flex" gap={2} flexWrap="wrap" mb={0.5}>
+          <Typography variant="caption" data-testid="session-tokens" sx={{ color: '#555' }}>
+            {session.tokensIn != null && session.tokensOut != null
+              ? `↓${session.tokensIn.toLocaleString()} ↑${session.tokensOut.toLocaleString()} tokens`
+              : '— tokens'}
+          </Typography>
+          <Typography variant="caption" data-testid="session-cost" sx={{ color: '#555' }}>
+            {session.costUsd != null ? `$${session.costUsd.toFixed(4)}` : '—'}
+          </Typography>
+          {session.unpushedCount !== null && session.unpushedCount > 0 && (
+            <Typography
+              variant="caption"
+              data-testid="unpushed-count"
+              sx={{ color: '#d97706', fontWeight: 600 }}
+            >
+              ↑{session.unpushedCount} unpushed
+            </Typography>
+          )}
+        </Box>
+        <Box display="flex" gap={1} flexWrap="wrap">
+          {session.gitBranch && (
+            <Typography variant="caption" sx={{ color: '#444' }}>
+              ⎇ {session.gitBranch}
+            </Typography>
+          )}
+          {session.lastCommitMsg && (
+            <Typography variant="caption" sx={{ color: '#666' }}>
+              {session.lastCommitMsg}
+            </Typography>
+          )}
+        </Box>
+        {session.githubUrl && (
+          <Box mt={0.5}>
+            <a
+              data-testid="github-link"
+              href={session.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: '12px', color: '#2563eb' }}
+            >
+              {session.githubUrl}
+            </a>
+          </Box>
         )}
-      </div>
-      <div style={{ fontSize: '13px', color: '#444' }}>
-        {session.gitBranch && <span style={{ marginRight: '8px' }}>⎇ {session.gitBranch}</span>}
-        {session.lastCommitMsg && <span style={{ marginRight: '8px' }}>{session.lastCommitMsg}</span>}
-        {session.unpushedCount !== null && session.unpushedCount > 0 && (
-          <span style={{ color: '#dc2626' }}>↑{session.unpushedCount} unpushed</span>
-        )}
-      </div>
-      {session.githubUrl && (
-        <div style={{ marginTop: '4px' }}>
-          <a
-            data-testid="github-link"
-            href={session.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ fontSize: '12px', color: '#2563eb' }}
-          >
-            {session.githubUrl}
-          </a>
-        </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   )
 }

@@ -403,11 +403,10 @@ describe('finn touch', () => {
 // ── finn web ───────────────────────────────────────────────────────────────
 
 describe('finn web', () => {
-  it('prints stub message and exits 0', async () => {
+  it('registers web command without errors', async () => {
     const { program } = await setupProgram()
-    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    await program.parseAsync(['node', 'finn', 'web'])
-    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
-    expect(output).toContain('finn web coming in Phase 4')
+    const webCmd = program.commands.find(c => c.name() === 'web')
+    expect(webCmd).toBeDefined()
+    expect(webCmd?.description()).toContain('localhost:3141')
   })
 })
