@@ -1,0 +1,59 @@
+import { execSync } from 'child_process'
+import { basename, join } from 'path'
+import { appendFileSync, readFileSync } from 'fs'
+import { homedir } from 'os'
+
+const LOG_PATH = join(homedir(), '.finnisher', 'hook.log')
+
+export function appendHookLog(message: string): void {
+  const line = `[${new Date().toISOString()}] ${message}\n`
+  try {
+    appendFileSync(LOG_PATH, line)
+  } catch {
+    // log dir may not exist yet — silently swallow
+  }
+}
+
+export function normaliseGithubUrl(raw: string): string | null {
+  if (!raw) return null
+
+  let url = raw.trim()
+
+  // SSH: git@github.com:user/repo.git → https://github.com/user/repo
+  const sshMatch = url.match(/^git@github\.com:(.+?)(?:\.git)?$/)
+  if (sshMatch) return `https://github.com/${sshMatch[1]}`
+
+  // HTTPS: must be github.com
+  if (!url.includes('github.com')) return null
+
+  // Strip trailing .git
+  url = url.replace(/\.git$/, '')
+  return url
+}
+
+export function getGithubUrl(cwd: string): string | null {
+  try {
+    const raw = execSync('git remote get-url origin', {
+      cwd,
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim()
+    return normaliseGithubUrl(raw)
+  } catch {
+    return null
+  }
+}
+
+export function getFolderName(projectPath: string | null | undefined): string | null {
+  if (!projectPath) return null
+  return basename(projectPath)
+}
+
+export function getThreadId(cwd: string = process.cwd()): string | null {
+  try {
+    const content = readFileSync(join(cwd, '.finn-thread'), 'utf8')
+    return content.trim() || null
+  } catch {
+    return null
+  }
+}
