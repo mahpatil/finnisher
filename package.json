@@ -1,6 +1,6 @@
 {
   "name": "finnisher",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Personal execution tracking system — threads + sessions",
   "type": "module",
   "bin": {
