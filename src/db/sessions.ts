@@ -14,11 +14,10 @@ export function closeSession(id: string, data: Partial<NewSession>): void {
 }
 
 export function listSessions(opts?: { threadId?: string; limit?: number }): Session[] {
-  let query = getDb().select().from(sessions)
-  if (opts?.threadId) {
-    query = query.where(eq(sessions.threadId, opts.threadId)) as typeof query
-  }
-  const results = query.all()
+  const base = getDb().select().from(sessions)
+  const results = opts?.threadId
+    ? base.where(eq(sessions.threadId, opts.threadId)).all()
+    : base.all()
   if (opts?.limit) return results.slice(0, opts.limit)
   return results
 }

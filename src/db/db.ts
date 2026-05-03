@@ -7,11 +7,13 @@ import * as schema from './schema.js'
 
 const DEFAULT_DB_PATH = join(homedir(), '.finnisher', 'db.sqlite')
 
-let _db: ReturnType<typeof drizzle> | null = null
+type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>
+
+let _db: DrizzleDb | null = null
 let _sqlite: InstanceType<typeof Database> | null = null
 
-export function getDb(dbPath?: string): ReturnType<typeof drizzle<typeof schema>> {
-  if (_db) return _db as ReturnType<typeof drizzle<typeof schema>>
+export function getDb(dbPath?: string): DrizzleDb {
+  if (_db) return _db
 
   const path = dbPath ?? process.env['FINNISHER_DB_PATH'] ?? DEFAULT_DB_PATH
   mkdirSync(join(path, '..'), { recursive: true })
@@ -21,7 +23,7 @@ export function getDb(dbPath?: string): ReturnType<typeof drizzle<typeof schema>
   _sqlite.pragma('foreign_keys = ON')
 
   _db = drizzle(_sqlite, { schema })
-  return _db as ReturnType<typeof drizzle<typeof schema>>
+  return _db
 }
 
 export function getSqlite(): InstanceType<typeof Database> {

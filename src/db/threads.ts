@@ -1,4 +1,4 @@
-import { eq, ne, and } from 'drizzle-orm'
+import { eq, ne, and, count } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { getDb } from './db.js'
 import { threads, type Thread, type NewThread, type ThreadState } from './schema.js'
@@ -56,7 +56,8 @@ export function isStalled(thread: Thread): boolean {
 }
 
 export function activeThreadCount(): number {
-  return getDb().select().from(threads).where(eq(threads.state, 'active')).all().length
+  const result = getDb().select({ count: count() }).from(threads).where(eq(threads.state, 'active')).get()
+  return result?.count ?? 0
 }
 
 export function overloadWarning(allThreads: Thread[]): FocusWarning | null {

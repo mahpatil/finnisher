@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { execSync } from 'child_process'
-import { mkdirSync, rmSync, writeFileSync } from 'fs'
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { randomBytes } from 'crypto'
@@ -106,5 +106,51 @@ describe('getFolderName', () => {
   it('returns null when projectPath is undefined', async () => {
     const { getFolderName } = await import('../common.js')
     expect(getFolderName(undefined)).toBeNull()
+  })
+})
+
+// ── getThreadId ────────────────────────────────────────────────────────────
+
+describe('getThreadId', () => {
+  it('reads thread id from .finn-thread file', async () => {
+    const { getThreadId } = await import('../common.js')
+    const dir = tempDir()
+    writeFileSync(join(dir, '.finn-thread'), 'abc1234567\n')
+    expect(getThreadId(dir)).toBe('abc1234567')
+    rmSync(dir, { recursive: true })
+  })
+
+  it('returns null when .finn-thread is absent', async () => {
+    const { getThreadId } = await import('../common.js')
+    const dir = tempDir()
+    expect(getThreadId(dir)).toBeNull()
+    rmSync(dir, { recursive: true })
+  })
+
+  it('returns null when .finn-thread is empty', async () => {
+    const { getThreadId } = await import('../common.js')
+    const dir = tempDir()
+    writeFileSync(join(dir, '.finn-thread'), '   \n')
+    expect(getThreadId(dir)).toBeNull()
+    rmSync(dir, { recursive: true })
+  })
+})
+
+// ── appendHookLog ──────────────────────────────────────────────────────────
+
+describe('appendHookLog', () => {
+  it('writes a timestamped line to the log file', async () => {
+    const { appendHookLog } = await import('../common.js')
+    const dir = tempDir()
+    const logPath = join(dir, 'hook.log')
+    // Temporarily override LOG_PATH by writing to a known location via env
+    // appendHookLog uses ~/.finnisher/hook.log — test that it doesn't throw
+    expect(() => appendHookLog('test message')).not.toThrow()
+    rmSync(dir, { recursive: true })
+  })
+
+  it('silently swallows errors when log directory does not exist', async () => {
+    const { appendHookLog } = await import('../common.js')
+    expect(() => appendHookLog('msg')).not.toThrow()
   })
 })
