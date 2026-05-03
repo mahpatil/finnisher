@@ -2,7 +2,7 @@
 set -e
 
 REQUIRED_NODE_MAJOR=18
-FINNISHER_PKG="finnisher"
+FINNISHER_PKG="github:mahpatil/finnisher"
 
 # ── Check Node.js ──────────────────────────────────────────────────────────────
 if ! command -v node >/dev/null 2>&1; then
@@ -30,7 +30,7 @@ echo "Installing finnisher..."
 npm install -g "$FINNISHER_PKG" || {
   echo ""
   echo "npm install failed. Try:"
-  echo "  sudo npm install -g $FINNISHER_PKG"
+  echo "  sudo npm install -g github:mahpatil/finnisher"
   echo "or set a user prefix: https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally"
   exit 1
 }

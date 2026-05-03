@@ -1,5 +1,5 @@
 node_modules/
-dist/
+# dist/ is committed — needed for npm install -g github:mahpatil/finnisher
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
