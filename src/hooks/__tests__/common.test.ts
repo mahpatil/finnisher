@@ -154,3 +154,72 @@ describe('appendHookLog', () => {
     expect(() => appendHookLog('msg')).not.toThrow()
   })
 })
+
+// ── captureGitState ────────────────────────────────────────────────────────
+
+describe('captureGitState', () => {
+  it('returns null fields in a non-repo directory', async () => {
+    const { captureGitState } = await import('../common.js')
+    const dir = tempDir()
+    const state = captureGitState(dir)
+    expect(state.gitBranch).toBeNull()
+    expect(state.lastCommitSha).toBeNull()
+    expect(state.lastCommitMsg).toBeNull()
+    expect(state.unpushedCount).toBeNull()
+    rmSync(dir, { recursive: true })
+  })
+
+  it('returns branch and commit info for a repo with a commit', async () => {
+    const { captureGitState } = await import('../common.js')
+    const dir = tempDir()
+    execSync('git init -b main', { cwd: dir, stdio: 'pipe' })
+    execSync('git config user.email "test@test.com"', { cwd: dir, stdio: 'pipe' })
+    execSync('git config user.name "Test"', { cwd: dir, stdio: 'pipe' })
+    writeFileSync(join(dir, 'file.txt'), 'hello')
+    execSync('git add .', { cwd: dir, stdio: 'pipe' })
+    execSync('git commit -m "initial commit"', { cwd: dir, stdio: 'pipe' })
+
+    const state = captureGitState(dir)
+    expect(state.gitBranch).toBe('main')
+    expect(state.lastCommitSha).toHaveLength(40)
+    expect(state.lastCommitMsg).toBe('initial commit')
+    // no upstream → unpushedCount is null (rev-list @{u}.. fails with no upstream)
+    expect(state.unpushedCount).toBeNull()
+    rmSync(dir, { recursive: true })
+  })
+
+  it('returns null for all fields in a repo with no commits', async () => {
+    const { captureGitState } = await import('../common.js')
+    const dir = tempDir()
+    execSync('git init -b main', { cwd: dir, stdio: 'pipe' })
+    execSync('git config user.email "test@test.com"', { cwd: dir, stdio: 'pipe' })
+    execSync('git config user.name "Test"', { cwd: dir, stdio: 'pipe' })
+
+    const state = captureGitState(dir)
+    // HEAD is unborn — most commands fail and return null
+    expect(state.lastCommitSha).toBeNull()
+    expect(state.lastCommitMsg).toBeNull()
+    rmSync(dir, { recursive: true })
+  })
+
+  it('returns unpushedCount=0 when repo is up to date with upstream', async () => {
+    const { captureGitState } = await import('../common.js')
+    // Create a "remote" bare repo and clone it so there is an upstream
+    const remoteDir = tempDir()
+    execSync('git init --bare', { cwd: remoteDir, stdio: 'pipe' })
+
+    const localDir = tempDir()
+    execSync(`git clone ${remoteDir} ${localDir}`, { stdio: 'pipe' })
+    execSync('git config user.email "test@test.com"', { cwd: localDir, stdio: 'pipe' })
+    execSync('git config user.name "Test"', { cwd: localDir, stdio: 'pipe' })
+    writeFileSync(join(localDir, 'file.txt'), 'hello')
+    execSync('git add .', { cwd: localDir, stdio: 'pipe' })
+    execSync('git commit -m "first"', { cwd: localDir, stdio: 'pipe' })
+    execSync('git push origin HEAD', { cwd: localDir, stdio: 'pipe' })
+
+    const state = captureGitState(localDir)
+    expect(state.unpushedCount).toBe(0)
+    rmSync(remoteDir, { recursive: true })
+    rmSync(localDir, { recursive: true })
+  })
+})
