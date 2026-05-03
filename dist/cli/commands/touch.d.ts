@@ -1,0 +1,3 @@
+import type { Command } from 'commander';
+export declare function register(program: Command): void;
+//# sourceMappingURL=touch.d.ts.map
