@@ -60,6 +60,31 @@ describe('finn setup — ~/.claude/settings.json hooks', () => {
     expect(config.hooks.Stop).toBeDefined()
   })
 
+  it('writes hooks in { matcher, hooks } wrapper format required by Claude Code', async () => {
+    const home = tempDir()
+    const claudeDir = join(home, '.claude')
+    mkdirSync(claudeDir, { recursive: true })
+    const settingsPath = join(claudeDir, 'settings.json')
+    writeFileSync(settingsPath, JSON.stringify({}))
+
+    const { program } = await setup(home)
+    await program.parseAsync(['node', 'finn', 'setup', '--claude-settings', settingsPath])
+
+    const config = JSON.parse(readFileSync(settingsPath, 'utf8'))
+
+    const ptEntry = config.hooks.PostToolUse[0]
+    expect(ptEntry.matcher).toBe('')
+    expect(Array.isArray(ptEntry.hooks)).toBe(true)
+    expect(ptEntry.hooks[0].type).toBe('command')
+    expect(ptEntry.hooks[0].command).toContain('finn hook claude-pre-tool-use')
+
+    const stopEntry = config.hooks.Stop[0]
+    expect(stopEntry.matcher).toBe('')
+    expect(Array.isArray(stopEntry.hooks)).toBe(true)
+    expect(stopEntry.hooks[0].type).toBe('command')
+    expect(stopEntry.hooks[0].command).toContain('finn hook claude-stop')
+  })
+
   it('does not duplicate hook entries when run twice', async () => {
     const home = tempDir()
     const claudeDir = join(home, '.claude')

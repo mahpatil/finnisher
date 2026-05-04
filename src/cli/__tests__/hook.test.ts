@@ -3,6 +3,7 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 import { randomBytes } from 'crypto'
 import { mkdirSync, writeFileSync } from 'fs'
+import { Readable } from 'stream'
 import { Command } from 'commander'
 
 function tempDbPath() {
@@ -86,6 +87,30 @@ describe('finn hook claude-stop', () => {
     await expect(
       program.parseAsync(['node', 'finn', 'hook', 'claude-stop', '--stdin', 'not-json']),
     ).resolves.not.toThrow()
+  })
+})
+
+describe('finn hook claude-stop — process.stdin', () => {
+  it('reads token data from process.stdin when --stdin flag is not provided', async () => {
+    const { program, sessions } = await setup()
+    sessions.createSession({ agent: 'claude_code', startedAt: new Date() })
+
+    const payload = JSON.stringify({ totalCostUSD: 0.03, tokensIn: 500, tokensOut: 100 })
+    const mockStdin = Readable.from([payload])
+    const realStdin = process.stdin
+    Object.defineProperty(process, 'stdin', { value: mockStdin, configurable: true })
+
+    try {
+      await program.parseAsync(['node', 'finn', 'hook', 'claude-stop'])
+    } finally {
+      Object.defineProperty(process, 'stdin', { value: realStdin, configurable: true })
+    }
+
+    const closed = sessions.listSessions()[0]!
+    expect(closed.endedAt).not.toBeNull()
+    expect(closed.tokensIn).toBe(500)
+    expect(closed.tokensOut).toBe(100)
+    expect(closed.costUsd).toBeCloseTo(0.03)
   })
 })
 

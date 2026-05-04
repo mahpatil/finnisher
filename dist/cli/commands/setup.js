@@ -26,13 +26,15 @@ function mergeClaudeSettings(settingsPath) {
     const bin = finnBin();
     const preToolCmd = `${bin} hook claude-pre-tool-use`;
     const stopCmd = `${bin} hook claude-stop`;
-    const isDupe = (arr, cmd) => arr.some(e => e.command === cmd);
+    const hasCmd = (arr, cmd) => arr.some(w => w.hooks?.some(h => h.command === cmd));
     const preTool = Array.isArray(hooks['PostToolUse']) ? hooks['PostToolUse'] : [];
-    if (!isDupe(preTool, preToolCmd))
-        preTool.push({ type: 'command', command: preToolCmd });
+    if (!hasCmd(preTool, preToolCmd)) {
+        preTool.push({ matcher: '', hooks: [{ type: 'command', command: preToolCmd }] });
+    }
     const stop = Array.isArray(hooks['Stop']) ? hooks['Stop'] : [];
-    if (!isDupe(stop, stopCmd))
-        stop.push({ type: 'command', command: stopCmd });
+    if (!hasCmd(stop, stopCmd)) {
+        stop.push({ matcher: '', hooks: [{ type: 'command', command: stopCmd }] });
+    }
     hooks['PostToolUse'] = preTool;
     hooks['Stop'] = stop;
     config['hooks'] = hooks;

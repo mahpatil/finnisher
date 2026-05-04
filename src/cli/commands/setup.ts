@@ -10,6 +10,11 @@ interface ClaudeHookEntry {
   command: string
 }
 
+interface ClaudeHookWrapper {
+  matcher: string
+  hooks: ClaudeHookEntry[]
+}
+
 function finnBin(): string {
   try {
     return execSync('which finn', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim()
@@ -29,18 +34,23 @@ function mergeClaudeSettings(settingsPath: string): void {
     }
   }
 
-  const hooks = (config['hooks'] ?? {}) as Record<string, ClaudeHookEntry[]>
+  const hooks = (config['hooks'] ?? {}) as Record<string, ClaudeHookWrapper[]>
   const bin = finnBin()
   const preToolCmd = `${bin} hook claude-pre-tool-use`
   const stopCmd = `${bin} hook claude-stop`
 
-  const isDupe = (arr: ClaudeHookEntry[], cmd: string) => arr.some(e => e.command === cmd)
+  const hasCmd = (arr: ClaudeHookWrapper[], cmd: string) =>
+    arr.some(w => w.hooks?.some(h => h.command === cmd))
 
-  const preTool: ClaudeHookEntry[] = Array.isArray(hooks['PostToolUse']) ? hooks['PostToolUse'] : []
-  if (!isDupe(preTool, preToolCmd)) preTool.push({ type: 'command', command: preToolCmd })
+  const preTool: ClaudeHookWrapper[] = Array.isArray(hooks['PostToolUse']) ? hooks['PostToolUse'] : []
+  if (!hasCmd(preTool, preToolCmd)) {
+    preTool.push({ matcher: '', hooks: [{ type: 'command', command: preToolCmd }] })
+  }
 
-  const stop: ClaudeHookEntry[] = Array.isArray(hooks['Stop']) ? hooks['Stop'] : []
-  if (!isDupe(stop, stopCmd)) stop.push({ type: 'command', command: stopCmd })
+  const stop: ClaudeHookWrapper[] = Array.isArray(hooks['Stop']) ? hooks['Stop'] : []
+  if (!hasCmd(stop, stopCmd)) {
+    stop.push({ matcher: '', hooks: [{ type: 'command', command: stopCmd }] })
+  }
 
   hooks['PostToolUse'] = preTool
   hooks['Stop'] = stop

@@ -10,15 +10,29 @@ const EVENTS = [
     'opencode-stop',
     'git-post-commit',
 ];
+function readStdin() {
+    return new Promise(resolve => {
+        if (process.stdin.isTTY) {
+            resolve('');
+            return;
+        }
+        let data = '';
+        process.stdin.setEncoding('utf8');
+        process.stdin.on('data', (chunk) => { data += String(chunk); });
+        process.stdin.on('end', () => resolve(data.trim()));
+        process.stdin.on('error', () => resolve(''));
+    });
+}
 export function register(program) {
     program
         .command('hook <event>')
         .description('Internal hook dispatcher — called by agent hooks')
         .option('--stdin <json>', 'JSON payload (overrides process.stdin)')
         .option('--cwd <path>', 'Working directory override')
-        .action((event, opts) => {
+        .action(async (event, opts) => {
         const cwd = opts.cwd ?? process.cwd();
-        const raw = opts.stdin ?? '';
+        const needsStdin = event === 'claude-stop' || event === 'opencode-stop';
+        const raw = opts.stdin ?? (needsStdin ? await readStdin() : '');
         if (!EVENTS.includes(event)) {
             appendHookLog(`hook: unknown event "${event}"`);
             return;

@@ -14,15 +14,27 @@ const EVENTS = [
 ] as const
 type HookEvent = (typeof EVENTS)[number]
 
+function readStdin(): Promise<string> {
+  return new Promise(resolve => {
+    if (process.stdin.isTTY) { resolve(''); return }
+    let data = ''
+    process.stdin.setEncoding('utf8')
+    process.stdin.on('data', (chunk: unknown) => { data += String(chunk) })
+    process.stdin.on('end', () => resolve(data.trim()))
+    process.stdin.on('error', () => resolve(''))
+  })
+}
+
 export function register(program: Command): void {
   program
     .command('hook <event>')
     .description('Internal hook dispatcher — called by agent hooks')
     .option('--stdin <json>', 'JSON payload (overrides process.stdin)')
     .option('--cwd <path>', 'Working directory override')
-    .action((event: string, opts: { stdin?: string; cwd?: string }) => {
+    .action(async (event: string, opts: { stdin?: string; cwd?: string }) => {
       const cwd = opts.cwd ?? process.cwd()
-      const raw = opts.stdin ?? ''
+      const needsStdin = event === 'claude-stop' || event === 'opencode-stop'
+      const raw = opts.stdin ?? (needsStdin ? await readStdin() : '')
 
       if (!EVENTS.includes(event as HookEvent)) {
         appendHookLog(`hook: unknown event "${event}"`)
