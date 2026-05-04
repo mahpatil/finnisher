@@ -1,6 +1,6 @@
 export type ThreadState = 'active' | 'waiting' | 'blocked' | 'done';
 export type ThreadOwner = 'you' | 'ai_agent' | 'other';
-export type AgentType = 'claude_code' | 'codex' | 'opencode' | 'manual';
+export type AgentType = 'claude_code' | 'codex' | 'opencode' | 'gemini_code' | 'manual';
 export declare const threads: import("drizzle-orm/sqlite-core").SQLiteTableWithColumns<{
     name: "threads";
     schema: undefined;

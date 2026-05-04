@@ -1,12 +1,13 @@
 import { handleClaudeStart, handleClaudeStop } from '../../hooks/claude-code.js';
 import { handleCodexStop } from '../../hooks/codex.js';
-import { handleOpencodeStop } from '../../hooks/opencode.js';
+import { handleOpencodeStart, handleOpencodeStop } from '../../hooks/opencode.js';
 import { handleGitPostCommit } from '../../hooks/git.js';
 import { appendHookLog } from '../../hooks/common.js';
 const EVENTS = [
     'claude-pre-tool-use',
     'claude-stop',
     'codex-stop',
+    'opencode-start',
     'opencode-stop',
     'git-post-commit',
 ];
@@ -47,8 +48,11 @@ export function register(program) {
             case 'codex-stop':
                 handleCodexStop(cwd);
                 break;
+            case 'opencode-start':
+                handleOpencodeStart(cwd);
+                break;
             case 'opencode-stop':
-                handleOpencodeStop(raw);
+                handleOpencodeStop(raw, cwd);
                 break;
             case 'git-post-commit':
                 handleGitPostCommit(cwd);

@@ -3,6 +3,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from 'f
 import { join } from 'path';
 import { homedir } from 'os';
 import { runMigrations } from '../../db/migrate.js';
+function getFinnisherHome() {
+    return process.env['FINNISHER_HOME'] ?? homedir();
+}
 function finnBin() {
     try {
         return execSync('which finn', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
@@ -76,6 +79,57 @@ function isOnPath(bin) {
         return false;
     }
 }
+const OPENCODE_PLUGIN_CONTENT = `const { spawn } = require('child_process');
+
+module.exports = async (ctx) => ({
+  event: async ({ event }) => {
+    const bin = (() => {
+      try {
+        return require('child_process').execSync('which finn', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim()
+      } catch {
+        return 'finn'
+      }
+    })();
+
+    if (event.type === 'session.created') {
+      const cwd = process.cwd();
+      const child = spawn(bin, ['hook', 'opencode-start', '--cwd', cwd], { detached: true, stdio: 'ignore' });
+      child.unref();
+    }
+
+    if (event.type === 'session.deleted') {
+      const cwd = process.cwd();
+      const child = spawn(bin, ['hook', 'opencode-stop', '--cwd', cwd], { detached: true, stdio: 'ignore' });
+      child.unref();
+    }
+  },
+});
+`;
+function installOpenCodePlugin(home) {
+    const pluginDir = join(home, '.config', 'opencode', 'plugins');
+    const pluginPath = join(pluginDir, 'finnisher.js');
+    mkdirSync(pluginDir, { recursive: true });
+    writeFileSync(pluginPath, OPENCODE_PLUGIN_CONTENT);
+}
+function removeOpenCodeAfterHook(home) {
+    const configPath = join(home, '.opencode', 'config.json');
+    if (!existsSync(configPath))
+        return;
+    try {
+        const config = JSON.parse(readFileSync(configPath, 'utf8'));
+        const hooks = config['hooks'];
+        if (hooks && typeof hooks === 'object' && !Array.isArray(hooks)) {
+            const afterHook = hooks['after'];
+            if (typeof afterHook === 'string' && afterHook.includes('finn hook opencode-stop')) {
+                delete hooks['after'];
+                writeFileSync(configPath, JSON.stringify(config, null, 2));
+            }
+        }
+    }
+    catch {
+        // Ignore invalid JSON
+    }
+}
 export function register(program) {
     program
         .command('setup')
@@ -85,10 +139,11 @@ export function register(program) {
         .option('--claude-settings <path>', 'Path to ~/.claude/settings.json override')
         .option('--no-auto-detect', 'Skip agent auto-detection')
         .action(async (opts) => {
+        const home = getFinnisherHome();
         runMigrations();
         console.log('  ✓ DB initialized');
         if (opts.autoDetect !== false) {
-            const settingsPath = opts.claudeSettings ?? join(homedir(), '.claude', 'settings.json');
+            const settingsPath = opts.claudeSettings ?? join(home, '.claude', 'settings.json');
             if (isOnPath('claude') || existsSync(settingsPath)) {
                 mergeClaudeSettings(settingsPath);
             }
@@ -96,7 +151,7 @@ export function register(program) {
                 console.log('  ✗ Claude Code not found on PATH (skipped)');
             }
             if (isOnPath('codex')) {
-                const hooksDir = join(homedir(), '.codex', 'hooks');
+                const hooksDir = join(home, '.codex', 'hooks');
                 mkdirSync(hooksDir, { recursive: true });
                 const bin = finnBin();
                 writeFileSync(join(hooksDir, 'post-session'), `#!/bin/bash\n${bin} hook codex-stop\nexit 0\n`);
@@ -105,20 +160,11 @@ export function register(program) {
             else {
                 console.log('  ✗ Codex not found on PATH (skipped)');
             }
-            if (isOnPath('opencode')) {
-                const configPath = join(homedir(), '.opencode', 'config.json');
-                let ocConfig = {};
-                if (existsSync(configPath)) {
-                    try {
-                        ocConfig = JSON.parse(readFileSync(configPath, 'utf8'));
-                    }
-                    catch {
-                        ocConfig = {};
-                    }
-                }
-                ocConfig['hooks'] = { ...(ocConfig['hooks'] ?? {}), after: `${finnBin()} hook opencode-stop` };
-                mkdirSync(join(configPath, '..'), { recursive: true });
-                writeFileSync(configPath, JSON.stringify(ocConfig, null, 2));
+            if (isOnPath('opencode') || existsSync(join(home, '.opencode', 'config.json'))) {
+                // Remove old after hook from config.json
+                removeOpenCodeAfterHook(home);
+                // Install the new plugin
+                installOpenCodePlugin(home);
                 console.log('  ✓ OpenCode hooks registered');
             }
             else {

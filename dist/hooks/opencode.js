@@ -1,6 +1,27 @@
-import { appendHookLog, captureGitState } from './common.js';
-import { closeSession, getOpenSessions } from '../db/sessions.js';
-export function handleOpencodeStop(raw) {
+import { appendHookLog, captureGitState, getThreadId } from './common.js';
+import { closeSession, createSession, getOpenSessions } from '../db/sessions.js';
+export function handleOpencodeStart(cwd = process.cwd()) {
+    try {
+        const threadId = getThreadId(cwd);
+        const projectPath = cwd;
+        const existing = getOpenSessions().find(s => s.agent === 'opencode' && s.projectPath === projectPath);
+        if (existing) {
+            appendHookLog(`opencode-start: session already open for ${projectPath}`);
+            return;
+        }
+        createSession({
+            agent: 'opencode',
+            threadId,
+            projectPath,
+            startedAt: new Date(),
+        });
+        appendHookLog(`opencode-start: created session for ${projectPath}`);
+    }
+    catch (err) {
+        appendHookLog(`opencode-start error: ${String(err)}`);
+    }
+}
+export function handleOpencodeStop(raw, cwd) {
     try {
         try {
             JSON.parse(raw);
@@ -14,7 +35,7 @@ export function handleOpencodeStop(raw) {
             appendHookLog('opencode-stop: no open opencode session found');
             return;
         }
-        const projectPath = openSession.projectPath ?? process.cwd();
+        const projectPath = cwd ?? openSession.projectPath ?? process.cwd();
         const gitState = captureGitState(projectPath);
         closeSession(openSession.id, {
             endedAt: new Date(),
