@@ -43,7 +43,7 @@ describe('finn setup — DB init', () => {
 })
 
 describe('finn setup — ~/.claude/settings.json hooks', () => {
-  it('writes PostToolUse and Stop hook entries without destroying existing config', async () => {
+  it('writes UserPromptSubmit, PostToolUse and Stop hook entries without destroying existing config', async () => {
     const home = tempDir()
     const claudeDir = join(home, '.claude')
     mkdirSync(claudeDir, { recursive: true })
@@ -56,6 +56,7 @@ describe('finn setup — ~/.claude/settings.json hooks', () => {
     const config = JSON.parse(readFileSync(settingsPath, 'utf8'))
     expect(config.theme).toBe('dark')
     expect(config.hooks.OtherHook).toEqual(['existing'])
+    expect(config.hooks.UserPromptSubmit).toBeDefined()
     expect(config.hooks.PostToolUse).toBeDefined()
     expect(config.hooks.Stop).toBeDefined()
   })
@@ -71,6 +72,12 @@ describe('finn setup — ~/.claude/settings.json hooks', () => {
     await program.parseAsync(['node', 'finn', 'setup', '--claude-settings', settingsPath])
 
     const config = JSON.parse(readFileSync(settingsPath, 'utf8'))
+
+    const upsEntry = config.hooks.UserPromptSubmit[0]
+    expect(upsEntry.matcher).toBe('')
+    expect(Array.isArray(upsEntry.hooks)).toBe(true)
+    expect(upsEntry.hooks[0].type).toBe('command')
+    expect(upsEntry.hooks[0].command).toContain('finn hook claude-pre-tool-use')
 
     const ptEntry = config.hooks.PostToolUse[0]
     expect(ptEntry.matcher).toBe('')
@@ -97,6 +104,7 @@ describe('finn setup — ~/.claude/settings.json hooks', () => {
     await program.parseAsync(['node', 'finn', 'setup', '--claude-settings', settingsPath])
 
     const config = JSON.parse(readFileSync(settingsPath, 'utf8'))
+    expect(config.hooks.UserPromptSubmit).toHaveLength(1)
     expect(config.hooks.PostToolUse).toHaveLength(1)
     expect(config.hooks.Stop).toHaveLength(1)
   })

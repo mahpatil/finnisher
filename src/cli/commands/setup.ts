@@ -42,6 +42,11 @@ function mergeClaudeSettings(settingsPath: string): void {
   const hasCmd = (arr: ClaudeHookWrapper[], cmd: string) =>
     arr.some(w => w.hooks?.some(h => h.command === cmd))
 
+  const promptSubmit: ClaudeHookWrapper[] = Array.isArray(hooks['UserPromptSubmit']) ? hooks['UserPromptSubmit'] : []
+  if (!hasCmd(promptSubmit, preToolCmd)) {
+    promptSubmit.push({ matcher: '', hooks: [{ type: 'command', command: preToolCmd }] })
+  }
+
   const preTool: ClaudeHookWrapper[] = Array.isArray(hooks['PostToolUse']) ? hooks['PostToolUse'] : []
   if (!hasCmd(preTool, preToolCmd)) {
     preTool.push({ matcher: '', hooks: [{ type: 'command', command: preToolCmd }] })
@@ -52,6 +57,7 @@ function mergeClaudeSettings(settingsPath: string): void {
     stop.push({ matcher: '', hooks: [{ type: 'command', command: stopCmd }] })
   }
 
+  hooks['UserPromptSubmit'] = promptSubmit
   hooks['PostToolUse'] = preTool
   hooks['Stop'] = stop
   config['hooks'] = hooks

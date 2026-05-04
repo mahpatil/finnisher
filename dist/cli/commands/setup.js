@@ -27,6 +27,10 @@ function mergeClaudeSettings(settingsPath) {
     const preToolCmd = `${bin} hook claude-pre-tool-use`;
     const stopCmd = `${bin} hook claude-stop`;
     const hasCmd = (arr, cmd) => arr.some(w => w.hooks?.some(h => h.command === cmd));
+    const promptSubmit = Array.isArray(hooks['UserPromptSubmit']) ? hooks['UserPromptSubmit'] : [];
+    if (!hasCmd(promptSubmit, preToolCmd)) {
+        promptSubmit.push({ matcher: '', hooks: [{ type: 'command', command: preToolCmd }] });
+    }
     const preTool = Array.isArray(hooks['PostToolUse']) ? hooks['PostToolUse'] : [];
     if (!hasCmd(preTool, preToolCmd)) {
         preTool.push({ matcher: '', hooks: [{ type: 'command', command: preToolCmd }] });
@@ -35,6 +39,7 @@ function mergeClaudeSettings(settingsPath) {
     if (!hasCmd(stop, stopCmd)) {
         stop.push({ matcher: '', hooks: [{ type: 'command', command: stopCmd }] });
     }
+    hooks['UserPromptSubmit'] = promptSubmit;
     hooks['PostToolUse'] = preTool;
     hooks['Stop'] = stop;
     config['hooks'] = hooks;
