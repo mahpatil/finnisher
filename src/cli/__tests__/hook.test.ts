@@ -128,3 +128,31 @@ describe('finn hook claude-pre-tool-use', () => {
     expect(sessions.getOpenSessions().filter(s => s.agent === 'claude_code')).toHaveLength(1)
   })
 })
+
+describe('finn hook opencode-start', () => {
+  it('creates an open opencode session', async () => {
+    const { program, sessions } = await setup()
+    await program.parseAsync(['node', 'finn', 'hook', 'opencode-start'])
+    expect(sessions.getOpenSessions().filter(s => s.agent === 'opencode')).toHaveLength(1)
+  })
+
+  it('does not create a duplicate session when one is already open for same project', async () => {
+    const { program, sessions } = await setup()
+    await program.parseAsync(['node', 'finn', 'hook', 'opencode-start'])
+    await program.parseAsync(['node', 'finn', 'hook', 'opencode-start'])
+    expect(sessions.getOpenSessions().filter(s => s.agent === 'opencode')).toHaveLength(1)
+  })
+
+  it('creates session with threadId from .finn-thread', async () => {
+    const { program, sessions, common, threads } = await setup()
+    const dir = join(tmpdir(), 'finn-hook-test-' + randomBytes(4).toString('hex'))
+    mkdirSync(dir, { recursive: true })
+    // Create the thread first
+    const thread = threads.createThread({ title: 'Test', nextAction: 'N', state: 'active', owner: 'you' })
+    writeFileSync(join(dir, '.finn-thread'), thread.id)
+    await program.parseAsync(['node', 'finn', 'hook', 'opencode-start', '--cwd', dir])
+    const sess = sessions.getOpenSessions().filter(s => s.agent === 'opencode')
+    expect(sess).toHaveLength(1)
+    expect(sess[0]!.threadId).toBe(thread.id)
+  })
+})

@@ -2,7 +2,7 @@ import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
 
 export type ThreadState = 'active' | 'waiting' | 'blocked' | 'done'
 export type ThreadOwner = 'you' | 'ai_agent' | 'other'
-export type AgentType = 'claude_code' | 'codex' | 'opencode' | 'manual'
+export type AgentType = 'claude_code' | 'codex' | 'opencode' | 'gemini_code' | 'manual'
 
 export const threads = sqliteTable('threads', {
   id:          text('id').primaryKey(),

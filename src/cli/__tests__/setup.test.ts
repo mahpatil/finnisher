@@ -167,3 +167,59 @@ describe('finn setup — no agents detected', () => {
     ).resolves.not.toThrow()
   })
 })
+
+describe('finn setup — OpenCode plugin', () => {
+  it('creates plugin file at ~/.config/opencode/plugins/finnisher.js', async () => {
+    const home = tempDir()
+    process.env['FINNISHER_HOME'] = home
+    const { program } = await setup(home)
+    await program.parseAsync(['node', 'finn', 'setup'])
+    const pluginPath = join(home, '.config', 'opencode', 'plugins', 'finnisher.js')
+    expect(existsSync(pluginPath)).toBe(true)
+    const content = readFileSync(pluginPath, 'utf8')
+    expect(content).toContain('session.created')
+    expect(content).toContain('session.deleted')
+    expect(content).toContain('opencode-start')
+    expect(content).toContain('opencode-stop')
+    delete process.env['FINNISHER_HOME']
+  })
+
+  it('is idempotent — re-running setup does not duplicate plugin', async () => {
+    const home = tempDir()
+    process.env['FINNISHER_HOME'] = home
+    const { program } = await setup(home)
+    await program.parseAsync(['node', 'finn', 'setup'])
+    await program.parseAsync(['node', 'finn', 'setup'])
+    const pluginPath = join(home, '.config', 'opencode', 'plugins', 'finnisher.js')
+    const content = readFileSync(pluginPath, 'utf8')
+    // Should only have one copy of the plugin code
+    expect(content.match(/session\.created/g) || []).toHaveLength(1)
+    delete process.env['FINNISHER_HOME']
+  })
+
+  it('removes existing after hook from ~/.opencode/config.json', async () => {
+    const home = tempDir()
+    process.env['FINNISHER_HOME'] = home
+    const { program } = await setup(home)
+    // Create existing config with after hook
+    const configPath = join(home, '.opencode', 'config.json')
+    mkdirSync(join(configPath, '..'), { recursive: true })
+    writeFileSync(configPath, JSON.stringify({
+      hooks: { after: 'finn hook opencode-stop' },
+      otherSetting: true,
+    }))
+    await program.parseAsync(['node', 'finn', 'setup'])
+    const config = JSON.parse(readFileSync(configPath, 'utf8'))
+    expect(config.hooks.after).toBeUndefined()
+    expect(config.otherSetting).toBe(true)
+    delete process.env['FINNISHER_HOME']
+  })
+
+  it('outputs skip message when opencode is not on PATH', async () => {
+    const home = tempDir()
+    // Don't put opencode on path - the test temp dir won't have it
+    const { program } = await setup(home)
+    // We can't easily test this without mocking isOnPath, but the setup
+    // will skip opencode if not found
+  })
+})

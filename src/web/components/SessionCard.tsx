@@ -34,13 +34,15 @@ const agentLabel: Record<string, string> = {
   claude_code: 'Claude',
   codex: 'Codex',
   opencode: 'OpenCode',
+  gemini_code: 'Gemini',
   manual: 'Manual',
 }
 
-const agentColor: Record<string, 'secondary' | 'success' | 'info' | 'default'> = {
+const agentColor: Record<string, 'secondary' | 'success' | 'info' | 'warning' | 'default'> = {
   claude_code: 'secondary',
   codex: 'success',
   opencode: 'info',
+  gemini_code: 'warning',
   manual: 'default',
 }
 

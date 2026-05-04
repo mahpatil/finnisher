@@ -5,6 +5,10 @@ import { join } from 'path'
 import { homedir } from 'os'
 import { runMigrations } from '../../db/migrate.js'
 
+function getFinnisherHome(): string {
+  return process.env['FINNISHER_HOME'] ?? homedir()
+}
+
 interface ClaudeHookEntry {
   type: string
   command: string
@@ -97,6 +101,59 @@ function isOnPath(bin: string): boolean {
   }
 }
 
+const OPENCODE_PLUGIN_CONTENT = `const { spawn } = require('child_process');
+
+module.exports = async (ctx) => ({
+  event: async ({ event }) => {
+    const bin = (() => {
+      try {
+        return require('child_process').execSync('which finn', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim()
+      } catch {
+        return 'finn'
+      }
+    })();
+
+    if (event.type === 'session.created') {
+      const cwd = process.cwd();
+      const child = spawn(bin, ['hook', 'opencode-start', '--cwd', cwd], { detached: true, stdio: 'ignore' });
+      child.unref();
+    }
+
+    if (event.type === 'session.deleted') {
+      const cwd = process.cwd();
+      const child = spawn(bin, ['hook', 'opencode-stop', '--cwd', cwd], { detached: true, stdio: 'ignore' });
+      child.unref();
+    }
+  },
+});
+`
+
+function installOpenCodePlugin(home: string): void {
+  const pluginDir = join(home, '.config', 'opencode', 'plugins')
+  const pluginPath = join(pluginDir, 'finnisher.js')
+  mkdirSync(pluginDir, { recursive: true })
+  writeFileSync(pluginPath, OPENCODE_PLUGIN_CONTENT)
+}
+
+function removeOpenCodeAfterHook(home: string): void {
+  const configPath = join(home, '.opencode', 'config.json')
+  if (!existsSync(configPath)) return
+
+  try {
+    const config = JSON.parse(readFileSync(configPath, 'utf8')) as Record<string, unknown>
+    const hooks = config['hooks']
+    if (hooks && typeof hooks === 'object' && !Array.isArray(hooks)) {
+      const afterHook = (hooks as Record<string, unknown>)['after']
+      if (typeof afterHook === 'string' && afterHook.includes('finn hook opencode-stop')) {
+        delete (hooks as Record<string, unknown>)['after']
+        writeFileSync(configPath, JSON.stringify(config, null, 2))
+      }
+    }
+  } catch {
+    // Ignore invalid JSON
+  }
+}
+
 export function register(program: Command): void {
   program
     .command('setup')
@@ -112,11 +169,12 @@ export function register(program: Command): void {
         claudeSettings?: string
         autoDetect?: boolean
       }) => {
+        const home = getFinnisherHome()
         runMigrations()
         console.log('  ✓ DB initialized')
 
         if (opts.autoDetect !== false) {
-          const settingsPath = opts.claudeSettings ?? join(homedir(), '.claude', 'settings.json')
+          const settingsPath = opts.claudeSettings ?? join(home, '.claude', 'settings.json')
           if (isOnPath('claude') || existsSync(settingsPath)) {
             mergeClaudeSettings(settingsPath)
           } else {
@@ -124,7 +182,7 @@ export function register(program: Command): void {
           }
 
           if (isOnPath('codex')) {
-            const hooksDir = join(homedir(), '.codex', 'hooks')
+            const hooksDir = join(home, '.codex', 'hooks')
             mkdirSync(hooksDir, { recursive: true })
             const bin = finnBin()
             writeFileSync(
@@ -136,19 +194,11 @@ export function register(program: Command): void {
             console.log('  ✗ Codex not found on PATH (skipped)')
           }
 
-          if (isOnPath('opencode')) {
-            const configPath = join(homedir(), '.opencode', 'config.json')
-            let ocConfig: Record<string, unknown> = {}
-            if (existsSync(configPath)) {
-              try {
-                ocConfig = JSON.parse(readFileSync(configPath, 'utf8')) as Record<string, unknown>
-              } catch {
-                ocConfig = {}
-              }
-            }
-            ocConfig['hooks'] = { ...(ocConfig['hooks'] as object ?? {}), after: `${finnBin()} hook opencode-stop` }
-            mkdirSync(join(configPath, '..'), { recursive: true })
-            writeFileSync(configPath, JSON.stringify(ocConfig, null, 2))
+          if (isOnPath('opencode') || existsSync(join(home, '.opencode', 'config.json'))) {
+            // Remove old after hook from config.json
+            removeOpenCodeAfterHook(home)
+            // Install the new plugin
+            installOpenCodePlugin(home)
             console.log('  ✓ OpenCode hooks registered')
           } else {
             console.log('  ✗ OpenCode not found on PATH (skipped)')
