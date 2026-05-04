@@ -78,7 +78,7 @@ export default function Dashboard() {
 
   return (
     <Container maxWidth="md" sx={{ py: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box display="flex" mb={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5" fontWeight={700}>Finnisher</Typography>
         <Button
           variant="contained"

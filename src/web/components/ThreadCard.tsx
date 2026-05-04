@@ -32,9 +32,9 @@ export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaitin
   return (
     <Card data-testid="thread-card" variant="outlined" sx={{ mb: 1 }}>
       <CardContent sx={{ pb: '12px !important' }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+        <Box display="flex" sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box flex={1}>
-            <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+            <Box display="flex" gap={1} mb={0.5} sx={{ alignItems: 'center' }}>
               <Typography variant="subtitle1" fontWeight={600}>
                 {thread.title}
               </Typography>
@@ -42,9 +42,8 @@ export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaitin
                 <Box
                   data-testid="stalled-warning"
                   display="flex"
-                  alignItems="center"
                   gap={0.25}
-                  sx={{ color: '#dc2626', fontSize: '12px' }}
+                  sx={{ alignItems: 'center', color: '#dc2626', fontSize: '12px' }}
                 >
                   <WarningAmberIcon sx={{ fontSize: '14px' }} />
                   <span>Stalled</span>

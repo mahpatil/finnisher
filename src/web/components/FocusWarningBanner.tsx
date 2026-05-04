@@ -43,9 +43,7 @@ export function FocusWarningBanner({ warning, onMarkDone, onSetWaiting }: Props)
           key={s.id}
           data-testid="suggestion-item"
           display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 0.5 }}
+          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}
         >
           <Typography variant="body2" sx={{ color: textColor, flex: 1 }}>
             {s.title}

@@ -37,7 +37,7 @@ export function NextActionEdit({ threadId: _threadId, value, onSave }: Props) {
   }
 
   return (
-    <Box display="flex" alignItems="center" gap={0.5}>
+    <Box display="flex" gap={0.5} sx={{ alignItems: 'center' }}>
       <Typography variant="body2" data-testid="next-action-text" sx={{ color: '#555' }}>
         → {value}
       </Typography>

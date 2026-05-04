@@ -51,7 +51,7 @@ export function SessionCard({ session }: { session: SessionData }) {
   return (
     <Card data-testid="session-card" variant="outlined" sx={{ mb: 1 }}>
       <CardContent sx={{ pb: '12px !important' }}>
-        <Box display="flex" gap={1} alignItems="center" mb={0.5} flexWrap="wrap">
+        <Box display="flex" gap={1} mb={0.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
           <Chip
             data-testid="agent-badge"
             label={agentLabel[session.agent] ?? session.agent}
@@ -71,7 +71,7 @@ export function SessionCard({ session }: { session: SessionData }) {
             />
           )}
         </Box>
-        <Box display="flex" gap={2} flexWrap="wrap" mb={0.5}>
+        <Box display="flex" gap={2} mb={0.5} sx={{ flexWrap: 'wrap' }}>
           <Typography variant="caption" data-testid="session-tokens" sx={{ color: '#555' }}>
             {session.tokensIn != null && session.tokensOut != null
               ? `↓${session.tokensIn.toLocaleString()} ↑${session.tokensOut.toLocaleString()} tokens`
@@ -90,7 +90,7 @@ export function SessionCard({ session }: { session: SessionData }) {
             </Typography>
           )}
         </Box>
-        <Box display="flex" gap={1} flexWrap="wrap">
+        <Box display="flex" gap={1} sx={{ flexWrap: 'wrap' }}>
           {session.gitBranch && (
             <Typography variant="caption" sx={{ color: '#444' }}>
               ⎇ {session.gitBranch}
