@@ -3,6 +3,7 @@ import { spawn } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { createRequire } from 'module'
+import { existsSync } from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const require = createRequire(import.meta.url)
@@ -28,11 +29,18 @@ export function register(program: Command): void {
         process.exit(1)
       }
 
-      const webDir = path.resolve(__dirname, '../../src/web')
+      // dist/cli/commands/ → three levels up to package root, then src/web
+      const webDir = path.resolve(__dirname, '../../../src/web')
+      if (!existsSync(webDir)) {
+        console.error(`Web directory not found: ${webDir}`)
+        console.error('Run from the repo checkout with: npm run dev')
+        process.exit(1)
+      }
+
+      console.log('Starting dashboard at http://localhost:3141 ...')
       const child = spawn('npx', ['next', 'dev', '--port', '3141'], {
         cwd: webDir,
         stdio: 'inherit',
-        shell: true,
       })
       child.on('error', err => console.error('Failed to start web server:', err))
     })
