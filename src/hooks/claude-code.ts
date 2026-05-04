@@ -51,7 +51,9 @@ export function handleClaudeStop(raw: string, cwd?: string): void {
 
     if (parsed !== null && typeof parsed === 'object') {
       const p = parsed as Record<string, unknown>
-      if (typeof p['totalCostUSD'] === 'number') costUsd = p['totalCostUSD']
+      // Claude Code sends total_cost_usd (snake_case); also accept totalCostUSD
+      if (typeof p['total_cost_usd'] === 'number') costUsd = p['total_cost_usd']
+      else if (typeof p['totalCostUSD'] === 'number') costUsd = p['totalCostUSD']
       // flat format: { tokensIn, tokensOut }
       if (typeof p['tokensIn'] === 'number') tokensIn = p['tokensIn']
       if (typeof p['tokensOut'] === 'number') tokensOut = p['tokensOut']

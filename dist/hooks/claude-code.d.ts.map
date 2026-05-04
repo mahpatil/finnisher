@@ -1,1 +1,1 @@
-{"version":3,"file":"claude-code.d.ts","sourceRoot":"","sources":["../../src/hooks/claude-code.ts"],"names":[],"mappings":"AAGA,wBAAgB,iBAAiB,CAAC,OAAO,EAAE,OAAO,EAAE,GAAG,CAAC,EAAE,MAAM,GAAG,IAAI,CAqBtE;AAED,wBAAgB,gBAAgB,CAAC,GAAG,EAAE,MAAM,EAAE,GAAG,CAAC,EAAE,MAAM,GAAG,IAAI,CAyDhE"}
+{"version":3,"file":"claude-code.d.ts","sourceRoot":"","sources":["../../src/hooks/claude-code.ts"],"names":[],"mappings":"AAGA,wBAAgB,iBAAiB,CAAC,OAAO,EAAE,OAAO,EAAE,GAAG,CAAC,EAAE,MAAM,GAAG,IAAI,CAqBtE;AAED,wBAAgB,gBAAgB,CAAC,GAAG,EAAE,MAAM,EAAE,GAAG,CAAC,EAAE,MAAM,GAAG,IAAI,CA2DhE"}
