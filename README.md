@@ -89,6 +89,25 @@ echo ".finn-thread" >> .gitignore   # personal state, don't share
 All hooks (Claude Code, git, Codex, OpenCode) read this file automatically.
 
 ---
+### Example
+Linking Sessions to Threads
+Sessions are automatically linked to threads via the .finn-thread file convention:
+1. Create a thread and get its ID:
+      ```finn add "Build auth system" --next "Implement OAuth flow"```
+   
+2. Link your project to that thread:
+      echo "abc123xyz" > /path/to/project/.finn-thread
+      (Add .finn-thread to .gitignore — it's personal state.)
+3. Work normally. When you start a Claude/Codex/OpenCode session in that project:
+   - The hook reads .finn-thread via getThreadId() (src/hooks/common.ts:77-84)
+   - Creates a session with threadId set to that value
+   - On stop, closes the session with tokens, cost, and git state
+   - Every git commit also bumps the thread's updatedAt via the post-commit hook
+Manual querying:
+finn sessions --thread <id>    # Show sessions for a specific thread
+The relationship is a nullable FK (sessions.thread_id → threads.id), so sessions can exist unlinked if no .finn-thread file is present.
+
+---
 
 ## CLI Reference
 
