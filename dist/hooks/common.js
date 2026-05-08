@@ -2,6 +2,7 @@ import { execSync } from 'child_process';
 import { basename, join } from 'path';
 import { appendFileSync, readFileSync } from 'fs';
 import { homedir } from 'os';
+import { listSessions } from '../db/sessions.js';
 export function captureGitState(cwd) {
     const execGit = (cmd) => {
         try {
@@ -33,14 +34,14 @@ export function normaliseGithubUrl(raw) {
         return null;
     let url = raw.trim();
     // SSH: git@github.com:user/repo.git → https://github.com/user/repo
-    const sshMatch = url.match(/^git@github\\.com:(.+?)(?:\\.git)?$/);
+    const sshMatch = url.match(/^git@github\.com:(.+?)(?:\.git)?$/);
     if (sshMatch)
         return `https://github.com/${sshMatch[1]}`;
     // HTTPS: must be github.com
     if (!url.includes('github.com'))
         return null;
     // Strip trailing .git
-    url = url.replace(/\\.git$/, '');
+    url = url.replace(/\.git$/, '');
     return url;
 }
 export function getGithubUrl(cwd) {

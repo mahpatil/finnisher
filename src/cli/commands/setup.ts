@@ -135,6 +135,25 @@ function installOpenCodePlugin(home: string): void {
   writeFileSync(pluginPath, OPENCODE_PLUGIN_CONTENT)
 }
 
+function installGeminiHooks(home: string): void {
+  const settingsPath = join(home, '.gemini', 'settings.json')
+  let config: Record<string, unknown> = {}
+  if (existsSync(settingsPath)) {
+    try {
+      config = JSON.parse(readFileSync(settingsPath, 'utf8')) as Record<string, unknown>
+    } catch {
+      config = {}
+    }
+  }
+  const bin = finnBin()
+  const hooks = (config['hooks'] ?? {}) as Record<string, unknown>
+  if (!hooks['SessionStart']) hooks['SessionStart'] = `${bin} hook gemini-start`
+  if (!hooks['SessionEnd']) hooks['SessionEnd'] = `${bin} hook gemini-stop`
+  config['hooks'] = hooks
+  mkdirSync(join(settingsPath, '..'), { recursive: true })
+  writeFileSync(settingsPath, JSON.stringify(config, null, 2))
+}
+
 function removeOpenCodeAfterHook(home: string): void {
   const configPath = join(home, '.opencode', 'config.json')
   if (!existsSync(configPath)) return
@@ -202,6 +221,13 @@ export function register(program: Command): void {
             console.log('  ✓ OpenCode hooks registered')
           } else {
             console.log('  ✗ OpenCode not found on PATH (skipped)')
+          }
+
+          if (isOnPath('gemini')) {
+            installGeminiHooks(home)
+            console.log('  ✓ Gemini CLI hooks registered')
+          } else {
+            console.log('  ✗ Gemini not found on PATH (skipped)')
           }
         }
 

@@ -1,15 +1,14 @@
 import type { Command } from 'commander'
 import * as p from '@clack/prompts'
-import { listThreads, getThread, createThread } from '../../db/threads.js'
+import { listThreads, createThread } from '../../db/threads.js'
 import { listSessions } from '../../db/sessions.js'
-import { getGithubUrl, getFolderName, appendHookLog } from '../../hooks/common.js'
+import { getGithubUrl, appendHookLog } from '../../hooks/common.js'
 import { join } from 'path'
 import { homedir } from 'os'
-import { execSync } from 'child_process'
-import { writeFileSync } from 'fs'
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'fs'
 import type { Thread, Session } from '../../db/schema.js'
 
-const WORKSPACE_ROOT = join(homedir(), 'agent-os', 'code-workspaces')
+const WORKSPACE_ROOT = process.env['FINN_WORKSPACE_ROOT'] ?? join(homedir(), 'agent-os', 'code-workspaces')
 
 interface ProjectInfo {
   path: string
@@ -26,7 +25,7 @@ export function register(program: Command): void {
     .option('--create', 'Automatically create threads for unlinked projects')
     .option('--fix', 'Verify existing links and suggest corrections')
     .action(async (opts: { create?: boolean; fix?: boolean }) => {
-      p.log(`Discovering projects in ${WORKSPACE_ROOT}`)
+      p.log.message(`Discovering projects in ${WORKSPACE_ROOT}`)
 
       // Get all threads for quick lookup
       const allThreads = listThreads()
@@ -38,29 +37,23 @@ export function register(program: Command): void {
       // Scan workspace for projects
       const projects: ProjectInfo[] = []
       try {
-        const entries = execSync(`ls -1 ${WORKSPACE_ROOT}`, { encoding: 'utf8' })
-          .trim()
-          .split('\n')
-          .filter(Boolean)
+        const entries = readdirSync(WORKSPACE_ROOT)
 
         for (const entry of entries) {
           const projectPath = join(WORKSPACE_ROOT, entry)
           try {
-            // Check if it's a directory
-            execSync(`test -d ${projectPath}`, { stdio: 'ignore' })
-            
+            // Skip non-directories
+            if (!statSync(projectPath).isDirectory()) continue
+
             const folderName = entry
             const githubUrl = getGithubUrl(projectPath)
-            
+
             // Check for existing .finn-thread file
             let threadId: string | null = null
             try {
               const threadIdFile = join(projectPath, '.finn-thread')
-              const content = execSync(`cat ${threadIdFile}`, { encoding: 'utf8', stdio: 'ignore' })
-                .trim()
-              if (content) {
-                threadId = content
-              }
+              const content = readFileSync(threadIdFile, 'utf8').trim()
+              if (content) threadId = content
             } catch {
               // No .finn-thread file
             }
@@ -69,58 +62,50 @@ export function register(program: Command): void {
             if (!threadId && githubUrl) {
               const sessions = listSessions({ githubUrl, limit: 1 })
               if (sessions && sessions.length > 0) {
-                threadId = sessions[0].threadId
+                threadId = sessions[0].threadId ?? null
               }
             }
 
-            const threadTitle = threadId && threadMap.has(threadId) 
-              ? threadMap.get(threadId)!.title 
+            const threadTitle = threadId && threadMap.has(threadId)
+              ? threadMap.get(threadId)!.title
               : (threadId ?? null)
 
-            projects.push({
-              path: projectPath,
-              folderName,
-              githubUrl,
-              threadId,
-              threadTitle
-            })
+            projects.push({ path: projectPath, folderName, githubUrl, threadId, threadTitle })
           } catch (err) {
-            // Skip non-directories or inaccessible projects
+            // Skip inaccessible projects
             appendHookLog(`discover: skipping ${entry}: ${String(err)}`)
           }
         }
       } catch (err) {
-        p.error(`Failed to scan workspace: ${String(err)}`)
+        p.log.error(`Failed to scan workspace: ${String(err)}`)
         return
       }
 
       // Separate linked and unlinked projects
-      const linked = projects.filter(p => p.threadId !== null)
-      const unlinked = projects.filter(p => p.threadId === null)
+      const linked = projects.filter(proj => proj.threadId !== null)
+      const unlinked = projects.filter(proj => proj.threadId === null)
 
       if (opts.fix) {
-        p.log(`=== Fix Mode: Verifying existing links ===`)
+        p.log.message(`=== Fix Mode: Verifying existing links ===`)
         for (const project of linked) {
           const thread = threadMap.get(project.threadId!)
           if (!thread) {
-            p.warning(`Project '${project.folderName}' links to non-existent thread ${project.threadId}`)
-            // Suggest creating a new thread or removing the link
+            p.log.warn(`Project '${project.folderName}' links to non-existent thread ${project.threadId}`)
           } else if (project.githubUrl) {
-            // Verify the thread's sessions have this GitHub URL
-            const sessions = listSessions({ threadId: project.threadId, limit: 5 })
+            const sessions = listSessions({ threadId: project.threadId ?? undefined, limit: 5 })
             const hasMatchingSession = sessions.some((s: Session) => s.githubUrl === project.githubUrl)
             if (!hasMatchingSession) {
-              p.warning(`Project '${project.folderName}' (${project.githubUrl}) linked to thread '${thread.title}' but no recent session matches this GitHub URL`)
+              p.log.warn(`Project '${project.folderName}' (${project.githubUrl}) linked to thread '${thread.title}' but no recent session matches this GitHub URL`)
             }
           }
         }
       }
 
       if (opts.create) {
-        p.log(`=== Create Mode: Creating threads for unlinked projects ===`)
+        p.log.message(`=== Create Mode: Creating threads for unlinked projects ===`)
         for (const project of unlinked) {
           if (!project.githubUrl) {
-            p.log(`Skipping '${project.folderName}' - no GitHub URL detected`)
+            p.log.message(`Skipping '${project.folderName}' - no GitHub URL detected`)
             continue
           }
 
@@ -129,7 +114,7 @@ export function register(program: Command): void {
             initialValue: `${project.folderName} Development`
           })
           if (p.isCancel(title)) {
-            p.log(`Skipped '${project.folderName}'`)
+            p.log.message(`Skipped '${project.folderName}'`)
             continue
           }
 
@@ -140,39 +125,38 @@ export function register(program: Command): void {
             owner: 'you'
           })
 
-          // Create .finn-thread file
           try {
             const threadIdFile = join(project.path, '.finn-thread')
             writeFileSync(threadIdFile, thread.id + '\n', { encoding: 'utf8' })
-            p.success(`Created thread '${thread.title}' (${thread.id}) for ${project.folderName} and linked via .finn-thread`)
+            p.log.success(`Created thread '${thread.title}' (${thread.id}) for ${project.folderName} and linked via .finn-thread`)
           } catch (err) {
-            p.error(`Failed to create .finn-thread file for ${project.folderName}: ${String(err)}`)
+            p.log.error(`Failed to create .finn-thread file for ${project.folderName}: ${String(err)}`)
           }
         }
-        p.log(`Run 'finn list' to see all threads`)
+        p.log.message(`Run 'finn list' to see all threads`)
       } else {
         // Default display mode
-        p.log(`=== Discovery Results ===`)
-        p.log(`Total projects found: ${projects.length}`)
-        p.log(`Linked projects: ${linked.length}`)
-        p.log(`Unlinked projects: ${unlinked.length}`)
-        p.log('')
+        p.log.message(`=== Discovery Results ===`)
+        p.log.message(`Total projects found: ${projects.length}`)
+        p.log.message(`Linked projects: ${linked.length}`)
+        p.log.message(`Unlinked projects: ${unlinked.length}`)
+        p.log.message('')
 
         if (unlinked.length > 0) {
-          p.log(`Unlinked projects:`)
+          p.log.message(`Unlinked projects:`)
           for (const project of unlinked) {
             const githubInfo = project.githubUrl ? ` (${project.githubUrl})` : ' (no GitHub URL)'
-            p.log(`  - ${project.folderName}${githubInfo}`)
+            p.log.message(`  - ${project.folderName}${githubInfo}`)
           }
-          p.log('')
-          p.log(`Tip: Run 'finn discover --create' to automatically create threads for these projects`)
+          p.log.message('')
+          p.log.message(`Tip: Run 'finn discover --create' to automatically create threads for these projects`)
         }
 
         if (linked.length > 0) {
-          p.log(`Linked projects:`)
+          p.log.message(`Linked projects:`)
           for (const project of linked) {
             const thread = threadMap.get(project.threadId!)
-            p.log(`  - ${project.folderName} → ${thread?.title ?? 'unknown thread'} (${project.threadId})`)
+            p.log.message(`  - ${project.folderName} → ${thread?.title ?? 'unknown thread'} (${project.threadId})`)
           }
         }
       }

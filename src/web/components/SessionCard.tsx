@@ -96,7 +96,7 @@ export function SessionCard({ session }: { session: SessionData }) {
               : '— tokens'}
           </Typography>
           <Typography variant="caption" data-testid="session-cost" sx={{ color: '#555' }}>
-            {session.costUsd != null ? `$${session.costUsd.toFixed(4)}` : '—'}
+            {session.costUsd != null ? `$${session.costUsd.toFixed(2)}` : '—'}
           </Typography>
           {session.unpushedCount !== null && session.unpushedCount > 0 && (
             <Typography
