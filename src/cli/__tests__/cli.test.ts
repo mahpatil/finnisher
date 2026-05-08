@@ -325,7 +325,7 @@ describe('finn sessions', () => {
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'sessions'])
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
-    expect(output).toContain('claude_code')
+    expect(output).toContain('Claude')
     expect(output).toContain('$0.12')
     expect(output).toContain('myproject')
   })

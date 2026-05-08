@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { randomBytes } from 'crypto'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { Command } from 'commander'
 
 function tempDir() {
@@ -221,5 +221,81 @@ describe('finn setup — OpenCode plugin', () => {
     const { program } = await setup(home)
     // We can't easily test this without mocking isOnPath, but the setup
     // will skip opencode if not found
+  })
+})
+
+describe('finn setup — Gemini CLI hooks', () => {
+  function withGeminiOnPath<T>(fn: (origPath: string | undefined) => T): T {
+    const binDir = tempDir()
+    writeFileSync(join(binDir, 'gemini'), '#!/bin/bash\necho gemini\n')
+    chmodSync(join(binDir, 'gemini'), 0o755)
+    const origPath = process.env['PATH']
+    process.env['PATH'] = `${binDir}:${origPath ?? ''}`
+    try {
+      return fn(origPath)
+    } finally {
+      process.env['PATH'] = origPath
+    }
+  }
+
+  it('creates ~/.gemini/settings.json with SessionStart and SessionEnd hooks', async () => {
+    const home = tempDir()
+    process.env['FINNISHER_HOME'] = home
+    await withGeminiOnPath(async () => {
+      const { program } = await setup(home)
+      await program.parseAsync(['node', 'finn', 'setup'])
+    })
+    const settingsPath = join(home, '.gemini', 'settings.json')
+    expect(existsSync(settingsPath)).toBe(true)
+    const config = JSON.parse(readFileSync(settingsPath, 'utf8'))
+    expect(config.hooks.SessionStart).toContain('finn hook gemini-start')
+    expect(config.hooks.SessionEnd).toContain('finn hook gemini-stop')
+    delete process.env['FINNISHER_HOME']
+  })
+
+  it('is idempotent — re-running setup does not overwrite manually set hooks', async () => {
+    const home = tempDir()
+    process.env['FINNISHER_HOME'] = home
+    await withGeminiOnPath(async () => {
+      const { program } = await setup(home)
+      await program.parseAsync(['node', 'finn', 'setup'])
+      vi.resetModules()
+      const { runMigrations } = await import('../../db/migrate.js')
+      runMigrations()
+      const { register } = await import('../commands/setup.js')
+      const program2 = new Command().exitOverride()
+      register(program2)
+      await program2.parseAsync(['node', 'finn', 'setup'])
+    })
+    const config = JSON.parse(readFileSync(join(home, '.gemini', 'settings.json'), 'utf8'))
+    expect(typeof config.hooks.SessionStart).toBe('string')
+    expect(typeof config.hooks.SessionEnd).toBe('string')
+    delete process.env['FINNISHER_HOME']
+  })
+
+  it('preserves existing keys in ~/.gemini/settings.json', async () => {
+    const home = tempDir()
+    process.env['FINNISHER_HOME'] = home
+    const geminiDir = join(home, '.gemini')
+    mkdirSync(geminiDir, { recursive: true })
+    writeFileSync(join(geminiDir, 'settings.json'), JSON.stringify({ theme: 'dark', model: 'gemini-2.5-pro' }))
+    await withGeminiOnPath(async () => {
+      const { program } = await setup(home)
+      await program.parseAsync(['node', 'finn', 'setup'])
+    })
+    const config = JSON.parse(readFileSync(join(geminiDir, 'settings.json'), 'utf8'))
+    expect(config.theme).toBe('dark')
+    expect(config.model).toBe('gemini-2.5-pro')
+    expect(config.hooks.SessionStart).toContain('finn hook gemini-start')
+    delete process.env['FINNISHER_HOME']
+  })
+
+  it('skips gracefully when gemini is not on PATH', async () => {
+    const home = tempDir()
+    const { program } = await setup(home)
+    // gemini is not in PATH (test temp dir has no gemini binary)
+    await expect(program.parseAsync(['node', 'finn', 'setup', '--no-auto-detect'])).resolves.not.toThrow()
+    const settingsPath = join(home, '.gemini', 'settings.json')
+    expect(existsSync(settingsPath)).toBe(false)
   })
 })

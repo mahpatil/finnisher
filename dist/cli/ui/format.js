@@ -5,6 +5,16 @@ const STATE_COLORS = {
     blocked: chalk.red,
     done: chalk.gray,
 };
+const AGENT_LABELS = {
+    claude_code: 'Claude',
+    codex: 'Codex',
+    opencode: 'OpenCode',
+    gemini_code: 'Gemini',
+    manual: 'Manual',
+};
+export function agentLabel(agent) {
+    return AGENT_LABELS[agent] ?? agent;
+}
 export function stateBadge(state) {
     const colorFn = STATE_COLORS[state] ?? chalk.white;
     return colorFn(state);

@@ -11,6 +11,7 @@ import { register as registerTouch } from './commands/touch.js'
 import { register as registerWeb } from './commands/web.js'
 import { register as registerHook } from './commands/hook.js'
 import { register as registerSetup } from './commands/setup.js'
+import { register as registerDiscover } from './commands/discover.js'
 
 runMigrations()
 
@@ -29,5 +30,6 @@ registerTouch(program)
 registerWeb(program)
 registerHook(program)
 registerSetup(program)
+registerDiscover(program)
 
 program.parse()

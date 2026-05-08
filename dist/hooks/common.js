@@ -2,6 +2,7 @@ import { execSync } from 'child_process';
 import { basename, join } from 'path';
 import { appendFileSync, readFileSync } from 'fs';
 import { homedir } from 'os';
+import { listSessions } from '../db/sessions.js';
 export function captureGitState(cwd) {
     const execGit = (cmd) => {
         try {
@@ -62,12 +63,40 @@ export function getFolderName(projectPath) {
     return basename(projectPath);
 }
 export function getThreadId(cwd = process.cwd()) {
+    // 1. First check for .finn-thread file (backward compatibility)
     try {
-        const content = readFileSync(join(cwd, '.finn-thread'), 'utf8');
-        return content.trim() || null;
+        const fileContent = readFileSync(join(cwd, '.finn-thread'), 'utf8');
+        const threadIdFromFile = fileContent.trim();
+        if (threadIdFromFile) {
+            // Return thread ID from file even if not verified in DB
+            // (allows for creating thread later)
+            return threadIdFromFile;
+        }
     }
     catch {
-        return null;
+        // File doesn't exist or other error - continue to GitHub check
     }
+    // 2. Check for GitHub URL match
+    const githubUrl = getGithubUrl(cwd);
+    if (githubUrl) {
+        const matchingThreadId = findThreadIdByGithubUrl(githubUrl);
+        if (matchingThreadId)
+            return matchingThreadId;
+    }
+    // 3. No thread found
+    return null;
+}
+// Helper function to find thread ID by GitHub URL
+export function findThreadIdByGithubUrl(githubUrl) {
+    try {
+        const sessions = listSessions({ githubUrl, limit: 1 });
+        if (sessions && sessions.length > 0) {
+            return sessions[0].threadId;
+        }
+    }
+    catch (err) {
+        appendHookLog(`findThreadIdByGithubUrl error: ${String(err)}`);
+    }
+    return null;
 }
 //# sourceMappingURL=common.js.map

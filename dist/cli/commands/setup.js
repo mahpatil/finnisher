@@ -111,6 +111,27 @@ function installOpenCodePlugin(home) {
     mkdirSync(pluginDir, { recursive: true });
     writeFileSync(pluginPath, OPENCODE_PLUGIN_CONTENT);
 }
+function installGeminiHooks(home) {
+    const settingsPath = join(home, '.gemini', 'settings.json');
+    let config = {};
+    if (existsSync(settingsPath)) {
+        try {
+            config = JSON.parse(readFileSync(settingsPath, 'utf8'));
+        }
+        catch {
+            config = {};
+        }
+    }
+    const bin = finnBin();
+    const hooks = (config['hooks'] ?? {});
+    if (!hooks['SessionStart'])
+        hooks['SessionStart'] = `${bin} hook gemini-start`;
+    if (!hooks['SessionEnd'])
+        hooks['SessionEnd'] = `${bin} hook gemini-stop`;
+    config['hooks'] = hooks;
+    mkdirSync(join(settingsPath, '..'), { recursive: true });
+    writeFileSync(settingsPath, JSON.stringify(config, null, 2));
+}
 function removeOpenCodeAfterHook(home) {
     const configPath = join(home, '.opencode', 'config.json');
     if (!existsSync(configPath))
@@ -169,6 +190,13 @@ export function register(program) {
             }
             else {
                 console.log('  ✗ OpenCode not found on PATH (skipped)');
+            }
+            if (isOnPath('gemini')) {
+                installGeminiHooks(home);
+                console.log('  ✓ Gemini CLI hooks registered');
+            }
+            else {
+                console.log('  ✗ Gemini not found on PATH (skipped)');
             }
         }
         if (opts.git) {

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { execSync } from 'child_process'
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
@@ -221,5 +221,90 @@ describe('captureGitState', () => {
     expect(state.unpushedCount).toBe(0)
     rmSync(remoteDir, { recursive: true })
     rmSync(localDir, { recursive: true })
+  })
+})
+
+// ── findThreadIdByGithubUrl ────────────────────────────────────────────────
+
+describe('findThreadIdByGithubUrl', () => {
+  afterEach(async () => {
+    const { _resetDb } = await import('../../db/db.js')
+    _resetDb()
+    vi.resetModules()
+    delete process.env['FINNISHER_DB_PATH']
+  })
+
+  async function setupDb() {
+    const home = tempDir()
+    process.env['FINNISHER_DB_PATH'] = join(home, 'db.sqlite')
+    vi.resetModules()
+    const { runMigrations } = await import('../../db/migrate.js')
+    runMigrations()
+    return home
+  }
+
+  it('returns null when no sessions match the github URL', async () => {
+    await setupDb()
+    const { findThreadIdByGithubUrl } = await import('../common.js')
+    expect(findThreadIdByGithubUrl('https://github.com/user/repo')).toBeNull()
+  })
+
+  it('returns threadId from a session with a matching github URL', async () => {
+    await setupDb()
+    const { createThread } = await import('../../db/threads.js')
+    const thread = createThread({
+      title: 'Test Thread',
+      nextAction: 'test',
+      state: 'active',
+      owner: 'you',
+    })
+    const { createSession } = await import('../../db/sessions.js')
+    createSession({
+      agent: 'claude_code',
+      startedAt: new Date(),
+      githubUrl: 'https://github.com/user/repo',
+      threadId: thread.id,
+      projectPath: '/some/path',
+      folderName: 'repo',
+    })
+    const { findThreadIdByGithubUrl } = await import('../common.js')
+    expect(findThreadIdByGithubUrl('https://github.com/user/repo')).toBe(thread.id)
+  })
+
+  it('returns null when the matching session has no threadId', async () => {
+    await setupDb()
+    const { createSession } = await import('../../db/sessions.js')
+    createSession({
+      agent: 'claude_code',
+      startedAt: new Date(),
+      githubUrl: 'https://github.com/user/repo',
+      threadId: null,
+      projectPath: '/some/path',
+      folderName: 'repo',
+    })
+    const { findThreadIdByGithubUrl } = await import('../common.js')
+    expect(findThreadIdByGithubUrl('https://github.com/user/repo')).toBeNull()
+  })
+
+  it('does not return sessions with a different github URL', async () => {
+    await setupDb()
+    const { createThread } = await import('../../db/threads.js')
+    const thread = createThread({
+      title: 'Other Thread',
+      nextAction: 'test',
+      state: 'active',
+      owner: 'you',
+    })
+    const { createSession } = await import('../../db/sessions.js')
+    createSession({
+      agent: 'claude_code',
+      startedAt: new Date(),
+      githubUrl: 'https://github.com/user/other-repo',
+      threadId: thread.id,
+      projectPath: '/other/path',
+      folderName: 'other-repo',
+    })
+    const { findThreadIdByGithubUrl } = await import('../common.js')
+    expect(findThreadIdByGithubUrl('https://github.com/user/repo')).toBeNull()
   })
 })
