@@ -15,6 +15,7 @@
     "build": "tsc && cp -r src/db/migrations/. dist/db/migrations/",
     "postinstall": "chmod +x dist/cli/index.js 2>/dev/null || true",
     "dev": "next dev --port 3141 src/web",
+    "dev:test": "FINNISHER_DB_PATH=/tmp/finnisher-e2e.sqlite next dev --port 3142 src/web",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:watch": "vitest",

@@ -63,7 +63,7 @@ export function ThreadForm({ open, onClose, onCreated }: Props) {
           margin="normal"
           value={title}
           onChange={e => setTitle(e.target.value)}
-          inputProps={{ 'data-testid': 'thread-title-input' }}
+          slotProps={{ htmlInput: { 'data-testid': 'thread-title-input' } }}
         />
         <TextField
           label="Next Action"
@@ -71,7 +71,7 @@ export function ThreadForm({ open, onClose, onCreated }: Props) {
           margin="normal"
           value={nextAction}
           onChange={e => setNextAction(e.target.value)}
-          inputProps={{ 'data-testid': 'thread-next-action-input' }}
+          slotProps={{ htmlInput: { 'data-testid': 'thread-next-action-input' } }}
         />
         <FormControl fullWidth margin="normal">
           <InputLabel>Owner</InputLabel>
