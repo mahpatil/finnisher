@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import type { ThreadState } from '../../db/schema.js'
+import type { ThreadState, AgentType } from '../../db/schema.js'
 import type { FocusWarning } from '../../db/threads.js'
 import type { Thread } from '../../db/schema.js'
 
@@ -8,6 +8,18 @@ const STATE_COLORS: Record<ThreadState, (s: string) => string> = {
   waiting: chalk.yellow,
   blocked: chalk.red,
   done:    chalk.gray,
+}
+
+const AGENT_LABELS: Record<string, string> = {
+  claude_code: 'Claude',
+  codex: 'Codex',
+  opencode: 'OpenCode',
+  gemini_code: 'Gemini',
+  manual: 'Manual',
+}
+
+export function agentLabel(agent: string): string {
+  return AGENT_LABELS[agent] ?? agent
 }
 
 export function stateBadge(state: ThreadState): string {

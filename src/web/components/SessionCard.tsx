@@ -30,6 +30,14 @@ function durationStr(startedAt: string, endedAt: string | null): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
+function formatTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString([], { month: 'short', day: 'numeric' })
+}
+
 const agentLabel: Record<string, string> = {
   claude_code: 'Claude',
   codex: 'Codex',
@@ -63,6 +71,14 @@ export function SessionCard({ session }: { session: SessionData }) {
           <Typography variant="caption" sx={{ color: running ? '#16a34a' : '#666' }}>
             {running ? '● running' : duration}
           </Typography>
+          <Typography variant="caption" sx={{ color: '#888' }}>
+            {formatDate(session.startedAt)} {formatTime(session.startedAt)}
+          </Typography>
+          {session.endedAt && (
+            <Typography variant="caption" sx={{ color: '#888' }}>
+              → {formatTime(session.endedAt)}
+            </Typography>
+          )}
           {session.folderName && (
             <Chip
               data-testid="folder-badge"

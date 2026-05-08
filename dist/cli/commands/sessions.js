@@ -1,6 +1,6 @@
 import Table from 'cli-table3';
 import { listSessions } from '../../db/sessions.js';
-import { durationStr, costStr } from '../ui/format.js';
+import { durationStr, costStr, agentLabel } from '../ui/format.js';
 function truncate(str, max) {
     return str.length > max ? str.slice(0, max - 1) + '…' : str;
 }
@@ -30,7 +30,7 @@ export function register(program) {
                 : '—';
             table.push([
                 s.id,
-                s.agent,
+                agentLabel(s.agent),
                 s.threadId ?? '—',
                 formatStarted(s.startedAt),
                 duration,
