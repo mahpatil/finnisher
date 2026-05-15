@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "surface-variant": "#353534",
+                  "surface-container-highest": "#353534",
+                  "tertiary-fixed-dim": "#ffb4aa",
+                  "on-tertiary-fixed-variant": "#930007",
+                  "outline": "#849584",
+                  "on-secondary-container": "#6b4b00",
+                  "surface-bright": "#3a3939",
+                  "inverse-primary": "#006d33",
+                  "on-secondary": "#412d00",
+                  "inverse-on-surface": "#313030",
+                  "on-tertiary": "#690004",
+                  "on-error-container": "#ffdad6",
+                  "secondary": "#ffdb9d",
+                  "surface-container-lowest": "#0e0e0e",
+                  "primary-fixed-dim": "#00e471",
+                  "on-background": "#e5e2e1",
+                  "primary-fixed": "#63ff93",
+                  "tertiary-fixed": "#ffdad5",
+                  "on-primary-fixed": "#00210b",
+                  "error-container": "#93000a",
+                  "error": "#ffb4ab",
+                  "on-primary-fixed-variant": "#005224",
+                  "on-surface": "#e5e2e1",
+                  "on-surface-variant": "#b9cbb8",
+                  "on-tertiary-container": "#c21415",
+                  "surface-container": "#201f1f",
+                  "inverse-surface": "#e5e2e1",
+                  "secondary-container": "#feb700",
+                  "on-primary-container": "#007134",
+                  "primary": "#f0ffed",
+                  "secondary-fixed": "#ffdea8",
+                  "surface-tint": "#00e471",
+                  "primary-container": "#00ff7f",
+                  "surface": "#131313",
+                  "surface-container-high": "#2a2a2a",
+                  "on-error": "#690005",
+                  "on-secondary-fixed-variant": "#5e4200",
+                  "background": "#131313",
+                  "tertiary": "#fff9f8",
+                  "surface-dim": "#131313",
+                  "on-secondary-fixed": "#271900",
+                  "on-primary": "#003917",
+                  "tertiary-container": "#ffd4ce",
+                  "secondary-fixed-dim": "#ffba20",
+                  "outline-variant": "#3b4b3c",
+                  "surface-container-low": "#1c1b1b",
+                  "on-tertiary-fixed": "#410001"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.125rem",
+                  "lg": "0.25rem",
+                  "xl": "0.5rem",
+                  "full": "0.75rem"
+          },
+          "spacing": {
+                  "margin": "24px",
+                  "density": "compact",
+                  "gutter": "16px",
+                  "container-max-width": "1440px",
+                  "unit": "4px"
+          },
+          "fontFamily": {
+                  "body-md": ["Inter"],
+                  "data-sm": ["JetBrains Mono"],
+                  "display-lg": ["Inter"],
+                  "label-caps": ["JetBrains Mono"],
+                  "headline-md": ["Inter"],
+                  "headline-sm": ["Inter"],
+                  "body-sm": ["Inter"],
+                  "data-lg": ["JetBrains Mono"],
+                  "data-md": ["JetBrains Mono"]
+          },
+          "fontSize": {
+                  "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                  "data-sm": ["11px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                  "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                  "label-caps": ["10px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                  "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                  "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                  "body-sm": ["12px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                  "data-lg": ["16px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                  "data-md": ["13px", {"lineHeight": "1.2", "fontWeight": "500"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      font-size: 20px;
+    }
+    .glass-card {
+      background: rgba(26, 26, 26, 0.6);
+      backdrop-filter: blur(20px);
+      border: 0.5px solid #333333;
+    }
+    .momentum-cell {
+      aspect-ratio: 1/1;
+      width: 100%;
+    }
+    body {
+      background-color: #0A0A0A;
+      color: #e5e2e1;
+    }
+    .friction-bar {
+      height: 4px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="font-body-md text-body-md antialiased">
+<!-- Side Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col p-4 space-y-2 z-40 bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant w-64">
+<div class="mb-8 px-2">
+<h1 class="font-headline-sm text-headline-sm font-black text-on-surface">Execution Engine</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant mt-1">Operational Insights</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 transition-all duration-150 ease-in-out text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-on-surface" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 transition-all duration-150 ease-in-out text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-on-surface" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="font-label-caps text-label-caps">Threads</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 transition-all duration-150 ease-in-out bg-primary-container/20 text-primary-fixed-dim border-l-2 border-primary-fixed-dim font-bold" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps">Execution Insights</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 transition-all duration-150 ease-in-out text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-on-surface" href="#">
+<span class="material-symbols-outlined">bolt</span>
+<span class="font-label-caps text-label-caps">Optimization</span>
+</a>
+</nav>
+<!-- Actionable Recommendations Sidebar Content (Top level button or list) -->
+<div class="pt-4 border-t border-outline-variant">
+<div class="px-2 mb-4">
+<span class="font-label-caps text-label-caps text-primary-fixed-dim block mb-2">AI ADVISORY</span>
+<div class="p-3 bg-primary-fixed-dim/5 border border-primary-fixed-dim/20 rounded-sm">
+<p class="text-[11px] leading-relaxed text-on-surface-variant">
+<span class="text-primary-fixed-dim font-bold">CRITICAL:</span> Thread 'Auth Refactor' has failed 3 validation loops. Consider manual intervention.
+</p>
+</div>
+</div>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-medium hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined text-primary-fixed-dim">tips_and_updates</span>
+<span class="font-label-caps text-label-caps">All Suggestions</span>
+</a>
+</div>
+</aside>
+<!-- Top Navigation Shell -->
+<header class="sticky top-0 z-50 flex items-center justify-between px-margin py-2 w-full max-w-container-max-width mx-auto bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-outline-variant pl-72">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold tracking-tighter text-primary-fixed-dim uppercase">Finnisher</span>
+<div class="flex items-center gap-2 ml-4 px-3 py-1 bg-surface-container-high/50 border border-outline-variant">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Avg Sessions to Close:</span>
+<span class="font-data-md text-data-md text-primary-fixed-dim">4.2</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary-fixed-dim transition-colors">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary-fixed-dim transition-colors">settings</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCh1xisaHW0WrBnDbfrMyHeMb2pJMX2Pr4Z7Zk9KGsp-B38xgJma5DMQeklFFcT7BBZ9j7EBX87a8Y9AXvI1VyWNN-N1021mubVUidkuu1wqLkHjHFA4cVPfdGdDWmM9RZ2JIEOZvPlUvtp3IBovMecB4XPg54W1WtMdXIFqxbpFiuUsciwWz52b_QEnO00mV4wotxPCaeU6-OEisoAs8u5cScn4br4yULAzVl3pSMmatknRlpwxvgBQkGAYDArjYuprQR4QKyBtAw"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pl-72 pr-margin py-8 w-full max-w-container-max-width mx-auto">
+<!-- Bento Grid -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Struggle Point Identification (Friction Heatmap) -->
+<div class="col-span-4 glass-card p-6 flex flex-col">
+<h3 class="font-headline-sm text-headline-sm mb-4">Friction Heatmap</h3>
+<div class="space-y-4">
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-data-sm text-data-sm">
+<span>Edge Case Handling</span>
+<span class="text-error">82% Retry Rate</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1">
+<div class="bg-error h-full" style="width: 82%"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-data-sm text-data-sm">
+<span>Schema Validation</span>
+<span class="text-error">45% Retry Rate</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1">
+<div class="bg-error/60 h-full" style="width: 45%"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-data-sm text-data-sm">
+<span>Unit Test Generation</span>
+<span class="text-primary-fixed-dim">12% Retry Rate</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1">
+<div class="bg-primary-fixed-dim/40 h-full" style="width: 12%"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-data-sm text-data-sm">
+<span>Documentation Sync</span>
+<span class="text-primary-fixed-dim">05% Retry Rate</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1">
+<div class="bg-primary-fixed-dim/20 h-full" style="width: 5%"></div>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-4 border-t border-outline-variant/30 text-[11px] text-on-surface-variant italic">
+        Validation loops are currently the primary bottleneck.
+      </div>
+</div>
+<!-- Effort Distribution Visualization -->
+<div class="col-span-8 glass-card p-6 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Effort Distribution</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Last 7 Days</span>
+</div>
+<div class="flex h-32 w-full gap-2 mt-4">
+<div class="h-full bg-primary-fixed-dim flex flex-col justify-center items-center group relative cursor-help" style="width: 40%">
+<span class="font-data-md text-data-md text-on-primary">40%</span>
+<div class="absolute -bottom-6 left-0 opacity-0 group-hover:opacity-100 transition-opacity font-label-caps text-[10px] whitespace-nowrap">Debugging</div>
+</div>
+<div class="h-full bg-primary-container/60 flex flex-col justify-center items-center group relative cursor-help" style="width: 30%">
+<span class="font-data-md text-data-md">30%</span>
+<div class="absolute -bottom-6 left-0 opacity-0 group-hover:opacity-100 transition-opacity font-label-caps text-[10px] whitespace-nowrap">New Features</div>
+</div>
+<div class="h-full bg-surface-container-highest flex flex-col justify-center items-center group relative cursor-help" style="width: 20%">
+<span class="font-data-md text-data-md">20%</span>
+<div class="absolute -bottom-6 left-0 opacity-0 group-hover:opacity-100 transition-opacity font-label-caps text-[10px] whitespace-nowrap">Documentation</div>
+</div>
+<div class="h-full bg-outline-variant flex flex-col justify-center items-center group relative cursor-help" style="width: 10%">
+<span class="font-data-md text-data-md">10%</span>
+<div class="absolute -bottom-6 right-0 opacity-0 group-hover:opacity-100 transition-opacity font-label-caps text-[10px] whitespace-nowrap">Refactoring</div>
+</div>
+</div>
+<div class="mt-8 flex justify-between font-data-sm text-data-sm text-on-surface-variant">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-primary-fixed-dim"></div>
+<span>Debugging Intensity High</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-primary-fixed-dim font-bold">↑ 12%</span>
+<span>vs last week</span>
+</div>
+</div>
+</div>
+<!-- Prioritization Engine: High Velocity Opportunities -->
+<div class="col-span-7 glass-card p-6 flex flex-col">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline-sm text-headline-sm">High Velocity Opportunities</h3>
+<p class="text-body-sm text-on-surface-variant">Projects &gt;85% completion with low cost-per-outcome</p>
+</div>
+<span class="bg-primary-fixed-dim text-on-primary px-2 py-1 font-label-caps text-[10px] font-bold">READY TO CLOSE</span>
+</div>
+<div class="space-y-4">
+<div class="p-4 border border-outline-variant/30 bg-surface-container-low hover:border-primary-fixed-dim/50 transition-colors cursor-pointer group">
+<div class="flex justify-between items-center mb-2">
+<span class="font-data-md text-data-md">Project: Omega_Deployment</span>
+<span class="font-data-sm text-data-sm text-primary-fixed-dim">$0.08/Outcome</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-fixed-dim w-[94%]"></div>
+</div>
+<span class="font-data-sm text-data-sm w-10 text-right">94%</span>
+</div>
+<div class="mt-3 flex justify-end">
+<button class="text-primary-fixed-dim font-label-caps text-[10px] flex items-center gap-1 group-hover:underline">
+            INITIATE FINAL VALIDATION <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="p-4 border border-outline-variant/30 bg-surface-container-low hover:border-primary-fixed-dim/50 transition-colors cursor-pointer group">
+<div class="flex justify-between items-center mb-2">
+<span class="font-data-md text-data-md">API_Gateway_Refactor</span>
+<span class="font-data-sm text-data-sm text-primary-fixed-dim">$0.12/Outcome</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-fixed-dim w-[88%]"></div>
+</div>
+<span class="font-data-sm text-data-sm w-10 text-right">88%</span>
+</div>
+<div class="mt-3 flex justify-end">
+<button class="text-primary-fixed-dim font-label-caps text-[10px] flex items-center gap-1 group-hover:underline">
+            INITIATE FINAL VALIDATION <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Session Intensity per Thread -->
+<div class="col-span-5 glass-card p-6">
+<h3 class="font-headline-sm text-headline-sm mb-6">Session Intensity</h3>
+<div class="space-y-4">
+<!-- Outlier -->
+<div class="p-3 border border-error/30 bg-error-container/5 relative overflow-hidden">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-data-md text-data-md block text-error">Auth_Refactor</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Baseline: 4.2 Sessions</span>
+</div>
+<div class="text-right">
+<span class="font-data-lg text-data-lg text-error">12</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant block">Sessions</span>
+</div>
+</div>
+<div class="mt-2 text-[11px] text-error uppercase font-bold tracking-tighter">Critically Above Baseline</div>
+<div class="absolute right-0 top-0 opacity-10">
+<span class="material-symbols-outlined text-4xl">warning</span>
+</div>
+</div>
+<!-- Average -->
+<div class="p-3 border border-outline-variant/30 bg-surface-container-low">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-data-md text-data-md block">Component_Library_V2</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Baseline: 4.2 Sessions</span>
+</div>
+<div class="text-right">
+<span class="font-data-lg text-data-lg text-on-surface">3</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant block">Sessions</span>
+</div>
+</div>
+</div>
+<!-- Low -->
+<div class="p-3 border border-outline-variant/30 bg-surface-container-low">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-data-md text-data-md block">CI_CD_Config</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Baseline: 4.2 Sessions</span>
+</div>
+<div class="text-right">
+<span class="font-data-lg text-data-lg text-on-surface">1</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant block">Session</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Raw Execution Stream -->
+<section class="mt-gutter glass-card overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-high/20">
+<h3 class="font-label-caps text-label-caps tracking-widest text-on-surface-variant">Raw Execution Stream</h3>
+<div class="flex gap-4">
+<span class="font-data-sm text-data-sm text-error">Anomalies: 03</span>
+<span class="font-data-sm text-data-sm text-on-surface-variant">Total Packets: 4,092</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-highest/30">
+<tr>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant">Timestamp</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant">Thread ID</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant">Operation</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant text-right">Intensity</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant text-right">Status</th>
+</tr>
+</thead>
+<tbody class="font-data-sm text-data-sm">
+<tr class="border-b border-outline-variant/20 hover:bg-surface-container-high/40 transition-colors">
+<td class="px-6 py-3">2023.10.27 14:22:01</td>
+<td class="px-6 py-3 text-primary-fixed-dim">AUTH_REFACTOR</td>
+<td class="px-6 py-3">Inference Loop [Retry #3]</td>
+<td class="px-6 py-3 text-right text-error font-bold">HIGH</td>
+<td class="px-6 py-3 text-right">
+<span class="px-2 py-0.5 bg-error-container/20 text-error border border-error/30 uppercase">Validation Failed</span>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/20 hover:bg-surface-container-high/40 transition-colors bg-white/5">
+<td class="px-6 py-3">2023.10.27 14:21:58</td>
+<td class="px-6 py-3 text-primary-fixed-dim">OMEGA_DEPLOY</td>
+<td class="px-6 py-3">Context Retrieval [Final Stage]</td>
+<td class="px-6 py-3 text-right text-primary-fixed-dim">LOW</td>
+<td class="px-6 py-3 text-right">
+<span class="px-2 py-0.5 bg-primary-container/20 text-primary-fixed-dim border border-primary-fixed-dim/30 uppercase">Success</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<!-- Floating AI Recommendation Panel (Minimized) -->
+<div class="fixed bottom-8 left-72 right-margin flex justify-center pointer-events-none">
+<div class="pointer-events-auto bg-surface-container border border-primary-fixed-dim/40 px-6 py-3 flex items-center gap-6 shadow-[0_8px_32px_rgba(0,0,0,0.8)] rounded-full">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim animate-pulse">smart_toy</span>
+<span class="font-data-sm text-data-sm">3 threads ready for immediate closure. Gain +14% capacity by finishing.</span>
+</div>
+<button class="bg-primary-fixed-dim text-on-primary px-4 py-1 font-label-caps text-[10px] font-bold rounded-full hover:scale-105 transition-transform">
+        VIEW OPPORTUNITIES
+      </button>
+</div>
+</div>
+<!-- Contextual FAB -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-primary-container text-on-primary-container rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.4)] flex items-center justify-center active:scale-95 transition-transform z-50">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</body></html>

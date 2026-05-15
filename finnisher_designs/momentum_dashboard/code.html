@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Finnisher | Momentum Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-variant": "#353534",
+                      "surface-container-highest": "#353534",
+                      "tertiary-fixed-dim": "#ffb4aa",
+                      "on-tertiary-fixed-variant": "#930007",
+                      "outline": "#849584",
+                      "on-secondary-container": "#6b4b00",
+                      "surface-bright": "#3a3939",
+                      "inverse-primary": "#006d33",
+                      "on-secondary": "#412d00",
+                      "inverse-on-surface": "#313030",
+                      "on-tertiary": "#690004",
+                      "on-error-container": "#ffdad6",
+                      "secondary": "#ffdb9d",
+                      "surface-container-lowest": "#0e0e0e",
+                      "primary-fixed-dim": "#00e471",
+                      "on-background": "#e5e2e1",
+                      "primary-fixed": "#63ff93",
+                      "tertiary-fixed": "#ffdad5",
+                      "on-primary-fixed": "#00210b",
+                      "error-container": "#93000a",
+                      "error": "#ffb4ab",
+                      "on-primary-fixed-variant": "#005224",
+                      "on-surface": "#e5e2e1",
+                      "on-surface-variant": "#b9cbb8",
+                      "on-tertiary-container": "#c21415",
+                      "surface-container": "#201f1f",
+                      "inverse-surface": "#e5e2e1",
+                      "secondary-container": "#feb700",
+                      "on-primary-container": "#007134",
+                      "primary": "#f0ffed",
+                      "secondary-fixed": "#ffdea8",
+                      "surface-tint": "#00e471",
+                      "primary-container": "#00ff7f",
+                      "surface": "#131313",
+                      "surface-container-high": "#2a2a2a",
+                      "on-error": "#690005",
+                      "on-secondary-fixed-variant": "#5e4200",
+                      "background": "#131313",
+                      "tertiary": "#fff9f8",
+                      "surface-dim": "#131313",
+                      "on-secondary-fixed": "#271900",
+                      "on-primary": "#003917",
+                      "tertiary-container": "#ffd4ce",
+                      "secondary-fixed-dim": "#ffba20",
+                      "outline-variant": "#3b4b3c",
+                      "surface-container-low": "#1c1b1b",
+                      "on-tertiary-fixed": "#410001"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin": "24px",
+                      "density": "compact",
+                      "gutter": "16px",
+                      "container-max-width": "1440px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter"],
+                      "data-sm": ["JetBrains Mono"],
+                      "display-lg": ["Inter"],
+                      "label-caps": ["JetBrains Mono"],
+                      "headline-md": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "data-lg": ["JetBrains Mono"],
+                      "data-md": ["JetBrains Mono"]
+              },
+              "fontSize": {
+                      "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "data-sm": ["11px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                      "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                      "label-caps": ["10px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                      "body-sm": ["12px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "data-lg": ["16px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                      "data-md": ["13px", {"lineHeight": "1.2", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(26, 26, 26, 0.6);
+            backdrop-filter: blur(20px);
+            border: 0.5px solid #333333;
+        }
+        .momentum-segment {
+            background: #333333;
+            height: 4px;
+            width: 100%;
+            display: flex;
+            gap: 2px;
+        }
+        .momentum-fill {
+            background: #00e471;
+            height: 100%;
+        }
+        .stalled-glow {
+            box-shadow: 0 0 15px rgba(147, 0, 7, 0.2);
+            border-color: #930007;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-50 flex items-center justify-between px-margin py-2 w-full max-w-container-max-width mx-auto bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<span class="font-headline-md text-headline-md font-bold tracking-tighter text-primary-fixed-dim">Finnisher</span>
+<div class="hidden md:flex gap-4">
+<a class="font-body-md text-body-md text-primary-fixed-dim border-b-2 border-primary-fixed-dim cursor-pointer transition-colors px-2 py-1">Dashboard</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-high/50 transition-colors cursor-pointer px-2 py-1">Archive</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-container-low border-b border-outline-variant text-body-sm py-1 pl-8 pr-4 focus:border-primary-fixed-dim focus:ring-0 transition-all w-64" placeholder="Search threads..." type="text"/>
+</div>
+<div class="flex gap-2">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high/50 p-2 transition-colors cursor-pointer active:scale-95 duration-200">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high/50 p-2 transition-colors cursor-pointer active:scale-95 duration-200">terminal</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high/50 p-2 transition-colors cursor-pointer active:scale-95 duration-200">settings</button>
+</div>
+</div>
+</header>
+<!-- SideNavBar (Docked Left) -->
+<nav class="fixed left-0 top-0 h-full flex flex-col p-4 space-y-2 z-40 bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant w-64 hidden xl:flex pt-16">
+<div class="mb-8 px-2">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 bg-primary-fixed-dim rounded-lg flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">account_tree</span>
+</div>
+<div>
+<p class="font-headline-sm text-headline-sm font-black text-on-surface">Project Alpha</p>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Active Threads: 12</p>
+</div>
+</div>
+<button class="w-full mt-4 bg-primary-fixed-dim text-on-primary py-2 px-4 rounded-lg font-label-caps text-label-caps flex items-center justify-center gap-2 hover:brightness-110 transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">add</span> New Thread
+            </button>
+</div>
+<div class="flex-grow space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 bg-primary-container/20 text-primary-fixed-dim border-l-2 border-primary-fixed-dim font-bold font-label-caps text-label-caps transition-all duration-150 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-medium font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined">account_tree</span> Threads
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-medium font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined">history</span> Sessions
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-medium font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined">speed</span> Analytics
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-medium font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined">smart_toy</span> Agents
+            </a>
+</div>
+<div class="pt-4 border-t border-outline-variant space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-medium font-label-caps text-label-caps hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">description</span> Documentation
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-medium font-label-caps text-label-caps hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">help</span> Support
+            </a>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="xl:pl-64 min-h-screen">
+<div class="max-w-container-max-width mx-auto p-margin">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-2">Momentum Engine</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl">Unified execution orchestration. Tracking parallel workflows and agent performance across all active clusters.</p>
+</div>
+<div class="flex gap-4">
+<div class="glass px-4 py-2 rounded-lg flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant">TOTAL VELOCITY</span>
+<span class="font-data-lg text-data-lg text-primary-fixed-dim">124.5 ops/s</span>
+</div>
+<div class="glass px-4 py-2 rounded-lg flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant">ACTIVE AGENTS</span>
+<span class="font-data-lg text-data-lg text-secondary-fixed">08</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Velocity Chart (Asymmetric Span) -->
+<div class="lg:col-span-8 glass p-6 rounded-xl flex flex-col min-h-[300px]">
+<div class="flex justify-between items-center mb-6">
+<span class="font-label-caps text-label-caps text-on-surface">VELOCITY HISTORY (7D)</span>
+<div class="flex gap-2">
+<span class="flex items-center gap-1 font-data-sm text-data-sm text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span> Compute
+                            </span>
+<span class="flex items-center gap-1 font-data-sm text-data-sm text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed"></span> Memory
+                            </span>
+</div>
+</div>
+<!-- Mock Chart Visualization -->
+<div class="flex-grow flex items-end gap-1 px-2">
+<div class="flex-grow bg-primary-fixed-dim/10 border-t border-primary-fixed-dim/40 h-[40%] transition-all hover:brightness-125"></div>
+<div class="flex-grow bg-primary-fixed-dim/10 border-t border-primary-fixed-dim/40 h-[65%] transition-all hover:brightness-125"></div>
+<div class="flex-grow bg-primary-fixed-dim/10 border-t border-primary-fixed-dim/40 h-[45%] transition-all hover:brightness-125"></div>
+<div class="flex-grow bg-primary-fixed-dim/10 border-t border-primary-fixed-dim/40 h-[85%] transition-all hover:brightness-125"></div>
+<div class="flex-grow bg-primary-fixed-dim/10 border-t border-primary-fixed-dim/40 h-[55%] transition-all hover:brightness-125"></div>
+<div class="flex-grow bg-primary-fixed-dim/10 border-t border-primary-fixed-dim/40 h-[70%] transition-all hover:brightness-125"></div>
+<div class="flex-grow bg-primary-fixed-dim h-[95%] transition-all hover:brightness-125"></div>
+</div>
+<div class="flex justify-between mt-4 font-data-sm text-data-sm text-on-surface-variant">
+<span>08 MAY</span>
+<span>09 MAY</span>
+<span>10 MAY</span>
+<span>11 MAY</span>
+<span>12 MAY</span>
+<span>13 MAY</span>
+<span>TODAY</span>
+</div>
+</div>
+<!-- Stalled Projects Alert -->
+<div class="lg:col-span-4 glass p-6 rounded-xl border-l-4 border-error-container">
+<div class="flex items-center gap-2 mb-4 text-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span class="font-label-caps text-label-caps">STALLED THREADS (02)</span>
+</div>
+<div class="space-y-4">
+<div class="bg-surface-container-high/50 p-3 rounded border border-outline-variant">
+<p class="font-headline-sm text-body-md text-on-surface">Data Ingestion Alpha</p>
+<p class="font-data-sm text-data-sm text-error mb-2">No session in 26h 14m</p>
+<button class="text-on-surface-variant hover:text-primary-fixed-dim font-label-caps text-label-caps flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-sm">refresh</span> RESTART AGENT
+                            </button>
+</div>
+<div class="bg-surface-container-high/50 p-3 rounded border border-outline-variant">
+<p class="font-headline-sm text-body-md text-on-surface">Security Audit L2</p>
+<p class="font-data-sm text-data-sm text-error mb-2">No session in 24h 02m</p>
+<button class="text-on-surface-variant hover:text-primary-fixed-dim font-label-caps text-label-caps flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-sm">refresh</span> RESTART AGENT
+                            </button>
+</div>
+</div>
+</div>
+<!-- Bento Grid: Active Threads -->
+<div class="lg:col-span-12 mt-4">
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Active Threads</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant">12 Total Systems</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Thread Card 1 -->
+<div class="glass p-5 rounded-xl transition-all hover:bg-surface-container-high group cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary-fixed-dim transition-colors">Vector Cache Hydration</h3>
+<span class="font-data-sm text-data-sm text-on-surface-variant">Last Session: 4m ago</span>
+</div>
+<span class="font-data-md text-data-md text-primary-fixed-dim">84%</span>
+</div>
+<!-- Momentum Meter -->
+<div class="momentum-segment mb-4 rounded-full overflow-hidden">
+<div class="momentum-fill" style="width: 84%"></div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">smart_toy</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">AGENT: ARCHIMEDES</span>
+</div>
+<span class="font-label-caps text-label-caps text-primary-container bg-on-primary-fixed-variant/30 px-2 py-0.5 rounded">SYNCING</span>
+</div>
+</div>
+<!-- Thread Card 2: Stalled -->
+<div class="glass p-5 rounded-xl border stalled-glow group cursor-pointer bg-surface-container-high/40">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-error">Security Audit L2</h3>
+<span class="font-data-sm text-data-sm text-on-error-container">Stalled 24h+</span>
+</div>
+<span class="font-data-md text-data-md text-on-surface-variant">12%</span>
+</div>
+<div class="momentum-segment mb-4 rounded-full overflow-hidden">
+<div class="momentum-fill bg-error" style="width: 12%"></div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">lock_person</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">AGENT: SENTINEL-4</span>
+</div>
+<span class="font-label-caps text-label-caps text-error border border-error px-2 py-0.5 rounded">INTERRUPTED</span>
+</div>
+</div>
+<!-- Thread Card 3 -->
+<div class="glass p-5 rounded-xl transition-all hover:bg-surface-container-high group cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary-fixed-dim transition-colors">Neural Mesh Training</h3>
+<span class="font-data-sm text-data-sm text-on-surface-variant">Last Session: 18m ago</span>
+</div>
+<span class="font-data-md text-data-md text-primary-fixed-dim">42%</span>
+</div>
+<div class="momentum-segment mb-4 rounded-full overflow-hidden">
+<div class="momentum-fill" style="width: 42%"></div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">psychology</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">AGENT: SYNAPSE</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-secondary-container bg-secondary/20 px-2 py-0.5 rounded">PROCESSING</span>
+</div>
+</div>
+<!-- Thread Card 4 -->
+<div class="glass p-5 rounded-xl transition-all hover:bg-surface-container-high group cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary-fixed-dim transition-colors">API Gateway Refactor</h3>
+<span class="font-data-sm text-data-sm text-on-surface-variant">Last Session: 1h ago</span>
+</div>
+<span class="font-data-md text-data-md text-primary-fixed-dim">98%</span>
+</div>
+<div class="momentum-segment mb-4 rounded-full overflow-hidden">
+<div class="momentum-fill" style="width: 98%"></div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">router</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">AGENT: CORTEX</span>
+</div>
+<span class="font-label-caps text-label-caps text-primary-fixed-dim border border-primary-fixed-dim px-2 py-0.5 rounded">FINALIZING</span>
+</div>
+</div>
+<!-- Thread Card 5 -->
+<div class="glass p-5 rounded-xl transition-all hover:bg-surface-container-high group cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary-fixed-dim transition-colors">Asset Pipeline Opt</h3>
+<span class="font-data-sm text-data-sm text-on-surface-variant">Last Session: Just now</span>
+</div>
+<span class="font-data-md text-data-md text-primary-fixed-dim">61%</span>
+</div>
+<div class="momentum-segment mb-4 rounded-full overflow-hidden">
+<div class="momentum-fill" style="width: 61%"></div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">imagesmode</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">AGENT: RENDER-BOT</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-secondary-container bg-secondary/20 px-2 py-0.5 rounded">ACTIVE</span>
+</div>
+</div>
+<!-- Thread Card 6: Empty/Placeholder -->
+<div class="border-2 border-dashed border-outline-variant p-5 rounded-xl flex flex-col items-center justify-center text-on-surface-variant hover:border-primary-fixed-dim hover:text-primary-fixed-dim transition-all cursor-pointer group">
+<span class="material-symbols-outlined text-3xl mb-2 group-hover:scale-110 transition-transform">add_circle</span>
+<span class="font-label-caps text-label-caps">INITIATE NEW THREAD</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB (Suppressed on details but visible here) -->
+<button class="fixed bottom-margin right-margin bg-primary-fixed-dim text-on-primary w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95 z-50">
+<span class="material-symbols-outlined">add</span>
+</button>
+</body></html>

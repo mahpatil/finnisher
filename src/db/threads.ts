@@ -41,6 +41,26 @@ export function updateState(id: string, state: ThreadState): void {
   getDb().update(threads).set(updates).where(eq(threads.id, id)).run()
 }
 
+export function updateMomentum(id: string, momentum: number): void {
+  getDb().update(threads).set({ momentum, updatedAt: new Date() }).where(eq(threads.id, id)).run()
+}
+
+export function setStalled(id: string, stalled: boolean): void {
+  getDb().update(threads).set({ stalled, updatedAt: new Date() }).where(eq(threads.id, id)).run()
+}
+
+export function findThreadIdByFolderName(folderName: string): string | null {
+  const result = getDb()
+    .select({ threadId: sessions.threadId })
+    .from(sessions)
+    .innerJoin(threads, eq(sessions.threadId, threads.id))
+    .where(eq(sessions.folderName, folderName))
+    .orderBy(threads.updatedAt)
+    .limit(1)
+    .get()
+  return result?.threadId ?? null
+}
+
 export function touchThread(id: string): void {
   getDb()
     .update(threads)

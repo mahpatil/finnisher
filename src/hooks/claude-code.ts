@@ -1,4 +1,4 @@
-import { appendHookLog, captureGitState, getFolderName, getGithubUrl, getThreadId } from './common.js'
+import { appendHookLog, captureGitState, getFolderName, getGithubUrl, getThreadId, extractUsageMetrics, detectEffortType } from './common.js'
 import { closeSession, createSession, getOpenSessions } from '../db/sessions.js'
 
 export function handleClaudeStart(payload: unknown, cwd?: string): void {
@@ -26,12 +26,11 @@ export function handleClaudeStart(payload: unknown, cwd?: string): void {
 
 export function handleClaudeStop(raw: string, cwd?: string): void {
   try {
-    let parsed: unknown
+    let parsed: any = null
     try {
       parsed = JSON.parse(raw)
     } catch {
-      appendHookLog('claude-stop: failed to parse JSON payload')
-      return
+      appendHookLog('claude-stop: payload is not valid JSON, using regex fallback')
     }
 
     const openSession = getOpenSessions().find(
@@ -45,25 +44,35 @@ export function handleClaudeStop(raw: string, cwd?: string): void {
     const projectPath = cwd ?? openSession.projectPath ?? process.cwd()
     const gitState = captureGitState(projectPath)
 
-    let tokensIn: number | null = null
-    let tokensOut: number | null = null
-    let costUsd: number | null = null
+    const metrics = extractUsageMetrics(raw)
+    let tokensIn = metrics.tokensIn
+    let tokensOut = metrics.tokensOut
+    let costUsd = metrics.costUsd
+    let agentId: string | null = null
+    let effortType = detectEffortType(raw)
+    let frictionScore = 0
+
+    // Try to extract friction (retries)
+    const retryMatch = raw.match(/(?:retry|attempt)\s*#?(\d+)/i)
+    if (retryMatch) frictionScore = parseInt(retryMatch[1], 10) - 1
 
     if (parsed !== null && typeof parsed === 'object') {
       const p = parsed as Record<string, unknown>
-      // Claude Code sends total_cost_usd (snake_case); also accept totalCostUSD
       if (typeof p['total_cost_usd'] === 'number') costUsd = p['total_cost_usd']
       else if (typeof p['totalCostUSD'] === 'number') costUsd = p['totalCostUSD']
-      // flat format: { tokensIn, tokensOut }
+      
       if (typeof p['tokensIn'] === 'number') tokensIn = p['tokensIn']
       if (typeof p['tokensOut'] === 'number') tokensOut = p['tokensOut']
-      // nested format: { usage: { input_tokens, output_tokens } }
+      
       const usage = p['usage']
       if (usage !== null && typeof usage === 'object') {
         const u = usage as Record<string, unknown>
         if (typeof u['input_tokens'] === 'number') tokensIn = u['input_tokens']
         if (typeof u['output_tokens'] === 'number') tokensOut = u['output_tokens']
       }
+
+      if (typeof p['model'] === 'string') agentId = p['model']
+      else if (typeof p['agentId'] === 'string') agentId = p['agentId']
     }
 
     closeSession(openSession.id, {
@@ -71,6 +80,9 @@ export function handleClaudeStop(raw: string, cwd?: string): void {
       tokensIn,
       tokensOut,
       costUsd,
+      agentId,
+      effortType,
+      frictionScore,
       gitBranch: gitState.gitBranch,
       lastCommitSha: gitState.lastCommitSha,
       lastCommitMsg: gitState.lastCommitMsg,
@@ -78,7 +90,7 @@ export function handleClaudeStop(raw: string, cwd?: string): void {
     })
 
     appendHookLog(
-      `claude-stop: closed session ${openSession.id} cost=${costUsd ?? 'null'} tokensIn=${tokensIn ?? 'null'}`,
+      `claude-stop: closed session ${openSession.id} cost=${costUsd ?? 'null'} friction=${frictionScore}`,
     )
   } catch (err) {
     appendHookLog(`claude-stop error: ${String(err)}`)

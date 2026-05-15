@@ -26,6 +26,8 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.10.0",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "better-sqlite3": "^12.10.0",
     "chalk": "^5.4.0",
     "cli-table3": "^0.6.5",

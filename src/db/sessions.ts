@@ -18,12 +18,14 @@ export function closeSession(id: string, data: Partial<NewSession>): void {
 export function listSessions(opts?: {
   threadId?: string
   githubUrl?: string
+  folderName?: string
   limit?: number
 }): Session[] {
   const base = getDb().select().from(sessions)
   const conditions = [
     opts?.threadId ? eq(sessions.threadId, opts.threadId) : undefined,
     opts?.githubUrl ? eq(sessions.githubUrl, opts.githubUrl) : undefined,
+    opts?.folderName ? eq(sessions.folderName, opts.folderName) : undefined,
   ].filter(Boolean) as Parameters<typeof and>
 
   const results = conditions.length > 0

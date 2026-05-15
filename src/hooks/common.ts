@@ -3,6 +3,7 @@ import { basename, join } from 'path'
 import { appendFileSync, readFileSync } from 'fs'
 import { homedir } from 'os'
 import { listSessions } from '../db/sessions.js'
+import { findThreadIdByFolderName } from '../db/threads.js'
 
 export interface GitState {
   gitBranch: string | null
@@ -75,6 +76,41 @@ export function getFolderName(projectPath: string | null | undefined): string | 
   return basename(projectPath)
 }
 
+export interface UsageMetrics {
+  tokensIn: number | null
+  tokensOut: number | null
+  costUsd: number | null
+}
+
+export function extractUsageMetrics(text: string): UsageMetrics {
+  const metrics: UsageMetrics = { tokensIn: null, tokensOut: null, costUsd: null }
+
+  // Tokens: "input: 1,000" or "input_tokens: 1000"
+  const inputMatch = text.match(/(?:input(?:_tokens)?):\s*([\d,]+)/i)
+  if (inputMatch) metrics.tokensIn = parseInt(inputMatch[1].replace(/,/g, ''), 10)
+
+  const outputMatch = text.match(/(?:output(?:_tokens)?):\s*([\d,]+)/i)
+  if (outputMatch) metrics.tokensOut = parseInt(outputMatch[1].replace(/,/g, ''), 10)
+
+  // Cost: "$0.0421" or "cost: 0.0421"
+  const costMatch = text.match(/(?:\$|cost:?\s*)([\d.]+)/i)
+  if (costMatch) metrics.costUsd = parseFloat(costMatch[1])
+
+  return metrics
+}
+
+export type EffortType = 'debugging' | 'feature' | 'refactor' | 'documentation' | 'validation'
+
+export function detectEffortType(text: string): EffortType {
+  const low = text.toLowerCase()
+  if (low.includes('debug') || low.includes('fix') || low.includes('issue')) return 'debugging'
+  if (low.includes('refactor')) return 'refactor'
+  if (low.includes('doc') || low.includes('readme')) return 'documentation'
+  if (low.includes('test') || low.includes('validate') || low.includes('verify')) return 'validation'
+  if (low.includes('feat') || low.includes('add') || low.includes('build')) return 'feature'
+  return 'validation' // default
+}
+
 export function getThreadId(cwd: string = process.cwd()): string | null {
   // 1. First check for .finn-thread file (backward compatibility)
   try {
@@ -96,7 +132,14 @@ export function getThreadId(cwd: string = process.cwd()): string | null {
     if (matchingThreadId) return matchingThreadId
   }
 
-  // 3. No thread found
+  // 3. Check for Folder Name match
+  const folderName = getFolderName(cwd)
+  if (folderName) {
+    const matchingThreadId = findThreadIdByFolderName(folderName)
+    if (matchingThreadId) return matchingThreadId
+  }
+
+  // 4. No thread found
   return null
 }
 
