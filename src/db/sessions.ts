@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, desc, eq, isNull } from 'drizzle-orm'
 import { customAlphabet } from 'nanoid'
 
 const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10)
@@ -21,7 +21,7 @@ export function listSessions(opts?: {
   folderName?: string
   limit?: number
 }): Session[] {
-  const base = getDb().select().from(sessions)
+  const base = getDb().select().from(sessions).orderBy(desc(sessions.startedAt))
   const conditions = [
     opts?.threadId ? eq(sessions.threadId, opts.threadId) : undefined,
     opts?.githubUrl ? eq(sessions.githubUrl, opts.githubUrl) : undefined,

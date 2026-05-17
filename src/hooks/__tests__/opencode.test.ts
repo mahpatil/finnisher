@@ -66,12 +66,12 @@ describe('handleOpencodeStart', () => {
     expect(sessions).toHaveLength(1)
   })
 
-  it('creates session without thread link when .finn-thread missing', async () => {
+  it('creates session with not null thread link (auto-created) when .finn-thread missing', async () => {
     const { handleOpencodeStart, listSessions } = await setup()
     handleOpencodeStart(process.cwd())
     const sessions = listSessions()
     expect(sessions).toHaveLength(1)
-    expect(sessions[0]!.threadId).toBeNull()
+    expect(sessions[0]!.threadId).not.toBeNull()
   })
 })
 

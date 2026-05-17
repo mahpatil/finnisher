@@ -3,7 +3,8 @@ import { basename, join } from 'path'
 import { appendFileSync, readFileSync } from 'fs'
 import { homedir } from 'os'
 import { listSessions } from '../db/sessions.js'
-import { findThreadIdByFolderName } from '../db/threads.js'
+import { findThreadIdByFolderName, createThread, getThread } from '../db/threads.js'
+import { writeFileSync } from 'fs'
 
 export interface GitState {
   gitBranch: string | null
@@ -117,9 +118,10 @@ export function getThreadId(cwd: string = process.cwd()): string | null {
     const fileContent = readFileSync(join(cwd, '.finn-thread'), 'utf8')
     const threadIdFromFile = fileContent.trim()
     if (threadIdFromFile) {
-      // Return thread ID from file even if not verified in DB
-      // (allows for creating thread later)
-      return threadIdFromFile
+      // Verify thread exists in DB to avoid FK violations
+      const thread = getThread(threadIdFromFile)
+      if (thread) return threadIdFromFile
+      // If not in DB, continue to other checks
     }
   } catch {
     // File doesn't exist or other error - continue to GitHub check
@@ -129,14 +131,20 @@ export function getThreadId(cwd: string = process.cwd()): string | null {
   const githubUrl = getGithubUrl(cwd)
   if (githubUrl) {
     const matchingThreadId = findThreadIdByGithubUrl(githubUrl)
-    if (matchingThreadId) return matchingThreadId
+    if (matchingThreadId) {
+      // Verify thread still exists
+      if (getThread(matchingThreadId)) return matchingThreadId
+    }
   }
 
   // 3. Check for Folder Name match
   const folderName = getFolderName(cwd)
   if (folderName) {
     const matchingThreadId = findThreadIdByFolderName(folderName)
-    if (matchingThreadId) return matchingThreadId
+    if (matchingThreadId) {
+      // Verify thread still exists
+      if (getThread(matchingThreadId)) return matchingThreadId
+    }
   }
 
   // 4. No thread found
@@ -154,4 +162,33 @@ export function findThreadIdByGithubUrl(githubUrl: string): string | null {
     appendHookLog(`findThreadIdByGithubUrl error: ${String(err)}`)
   }
   return null
+}
+
+export function ensureThreadId(cwd: string = process.cwd()): string | null {
+  const existing = getThreadId(cwd)
+  if (existing) return existing
+
+  try {
+    const folderName = getFolderName(cwd) || 'Unknown Project'
+    const thread = createThread({
+      title: `${folderName} Development`,
+      nextAction: 'Continue development',
+      state: 'active',
+      owner: 'you',
+    })
+
+    try {
+      const threadIdFile = join(cwd, '.finn-thread')
+      writeFileSync(threadIdFile, thread.id + '\n', { encoding: 'utf8' })
+    } catch (fileErr) {
+      appendHookLog(`ensureThreadId: failed to write .finn-thread file: ${String(fileErr)}`)
+      // Continue anyway, we have the thread in DB
+    }
+
+    appendHookLog(`ensureThreadId: created new thread ${thread.id} for ${folderName}`)
+    return thread.id
+  } catch (err) {
+    appendHookLog(`ensureThreadId error: ${String(err)}`)
+    return null
+  }
 }

@@ -71,11 +71,11 @@ describe('handleGeminiStart', () => {
     rmSync(projectDir, { recursive: true, force: true })
   })
 
-  it('creates session with null threadId when .finn-thread missing', async () => {
+  it('creates session with not null threadId (auto-created) when .finn-thread missing', async () => {
     const { handleGeminiStart, listSessions } = await setup()
     handleGeminiStart(undefined, '/test/project')
     const s = listSessions()[0]!
-    expect(s.threadId).toBeNull()
+    expect(s.threadId).not.toBeNull()
   })
 
   it('captures folderName from project path', async () => {

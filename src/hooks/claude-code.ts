@@ -1,5 +1,6 @@
-import { appendHookLog, captureGitState, getFolderName, getGithubUrl, getThreadId, extractUsageMetrics, detectEffortType } from './common.js'
+import { appendHookLog, captureGitState, getFolderName, getGithubUrl, getThreadId, ensureThreadId, extractUsageMetrics, detectEffortType } from './common.js'
 import { closeSession, createSession, getOpenSessions } from '../db/sessions.js'
+import { touchThread } from '../db/threads.js'
 
 export function handleClaudeStart(payload: unknown, cwd?: string): void {
   void payload
@@ -9,7 +10,7 @@ export function handleClaudeStart(payload: unknown, cwd?: string): void {
     if (existing) return
     const githubUrl = getGithubUrl(dir)
     const folderName = getFolderName(dir)
-    const threadId = getThreadId(dir)
+    const threadId = ensureThreadId(dir)
     const session = createSession({
       agent: 'claude_code',
       startedAt: new Date(),
@@ -18,7 +19,8 @@ export function handleClaudeStart(payload: unknown, cwd?: string): void {
       threadId,
       projectPath: dir,
     })
-    appendHookLog(`claude-start: created session ${session.id} folder=${folderName ?? 'null'}`)
+    if (threadId) touchThread(threadId)
+    appendHookLog(`claude-start: created session ${session.id} folder=${folderName ?? 'null'} threadId=${threadId ?? 'null'}`)
   } catch (err) {
     appendHookLog(`claude-start error: ${String(err)}`)
   }
@@ -30,7 +32,8 @@ export function handleClaudeStop(raw: string, cwd?: string): void {
     try {
       parsed = JSON.parse(raw)
     } catch {
-      appendHookLog('claude-stop: payload is not valid JSON, using regex fallback')
+      appendHookLog('claude-stop: payload is not valid JSON')
+      return
     }
 
     const openSession = getOpenSessions().find(
@@ -88,6 +91,8 @@ export function handleClaudeStop(raw: string, cwd?: string): void {
       lastCommitMsg: gitState.lastCommitMsg,
       unpushedCount: gitState.unpushedCount,
     })
+
+    if (openSession.threadId) touchThread(openSession.threadId)
 
     appendHookLog(
       `claude-stop: closed session ${openSession.id} cost=${costUsd ?? 'null'} friction=${frictionScore}`,

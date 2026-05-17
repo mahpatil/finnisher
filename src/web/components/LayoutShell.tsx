@@ -133,10 +133,7 @@ export function LayoutShell({ children, currentTab, onTabChange }: LayoutShellPr
                 </ListItemIcon>
                 <ListItemText 
                   primary={item.label} 
-                  primaryTypographyProps={{ 
-                    variant: 'overline', 
-                    sx: { fontSize: '0.625rem', letterSpacing: '0.05em' } 
-                  }} 
+                  slotProps={{ primary: { variant: 'overline', sx: { fontSize: '0.625rem', letterSpacing: '0.05em' } } }} 
                 />
               </ListItemButton>
             </ListItem>
@@ -167,7 +164,7 @@ export function LayoutShell({ children, currentTab, onTabChange }: LayoutShellPr
                 <ListItemIcon sx={{ minWidth: 40, color: 'text.secondary' }}>
                   <DescriptionIcon sx={{ fontSize: 20 }} />
                 </ListItemIcon>
-                <ListItemText primary="Documentation" primaryTypographyProps={{ variant: 'overline', sx: { fontSize: '0.625rem' } }} />
+                <ListItemText primary="Documentation" slotProps={{ primary: { variant: 'overline', sx: { fontSize: '0.625rem' } } }} />
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
@@ -175,7 +172,7 @@ export function LayoutShell({ children, currentTab, onTabChange }: LayoutShellPr
                 <ListItemIcon sx={{ minWidth: 40, color: 'text.secondary' }}>
                   <HelpIcon sx={{ fontSize: 20 }} />
                 </ListItemIcon>
-                <ListItemText primary="Support" primaryTypographyProps={{ variant: 'overline', sx: { fontSize: '0.625rem' } }} />
+                <ListItemText primary="Support" slotProps={{ primary: { variant: 'overline', sx: { fontSize: '0.625rem' } } }} />
               </ListItemButton>
             </ListItem>
           </List>

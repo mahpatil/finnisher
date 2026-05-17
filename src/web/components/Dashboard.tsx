@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import InfoIcon from '@mui/icons-material/Info'
 import { alpha } from '@mui/material/styles'
-import Grid from '@mui/material/Grid2'
+import Grid from '@mui/material/Grid'
 import Chip from '@mui/material/Chip'
 import { ThreadCard, type ThreadData } from './ThreadCard'
 import { FocusWarningBanner } from './FocusWarningBanner'
@@ -70,7 +70,8 @@ export default function Dashboard() {
 
   const focusWarning = tRes?.focusWarning ?? null
 
-  const activeThreads = allThreads.filter(t => t.state === 'active')
+  const activeThreads = [...allThreads.filter(t => t.state === 'active')]
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   const waitingThreads = allThreads.filter(t => t.state === 'waiting' || t.state === 'blocked')
   const stalledThreads = allThreads.filter(t => t.stalled && t.state !== 'done')
   const doneThreads = [...allThreads.filter(t => t.state === 'done')]

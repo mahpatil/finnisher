@@ -1,11 +1,11 @@
-import { appendHookLog, captureGitState, getThreadId } from './common.js'
+import { appendHookLog, captureGitState, getThreadId, ensureThreadId } from './common.js'
 import { closeSession, createSession, getOpenSessions } from '../db/sessions.js'
-import { getThread } from '../db/threads.js'
+import { getThread, touchThread } from '../db/threads.js'
 
 export function handleOpencodeStart(cwd: string = process.cwd()): void {
   try {
-    const threadId = getThreadId(cwd)
     const projectPath = cwd
+    const threadId = ensureThreadId(projectPath)
 
     const existing = getOpenSessions().find(
       s => s.agent === 'opencode' && s.projectPath === projectPath
@@ -22,7 +22,8 @@ export function handleOpencodeStart(cwd: string = process.cwd()): void {
       startedAt: new Date(),
     })
 
-    appendHookLog(`opencode-start: created session for ${projectPath}`)
+    if (threadId) touchThread(threadId)
+    appendHookLog(`opencode-start: created session for ${projectPath} threadId=${threadId ?? 'null'}`)
   } catch (err) {
     appendHookLog(`opencode-start error: ${String(err)}`)
   }
@@ -54,6 +55,7 @@ export function handleOpencodeStop(raw: string, cwd?: string): void {
       unpushedCount: gitState.unpushedCount,
     })
 
+    if (openSession.threadId) touchThread(openSession.threadId)
     appendHookLog(`opencode-stop: closed session ${openSession.id}`)
   } catch (err) {
     appendHookLog(`opencode-stop error: ${String(err)}`)

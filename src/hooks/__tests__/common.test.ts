@@ -111,28 +111,52 @@ describe('getFolderName', () => {
 
 // ── getThreadId ────────────────────────────────────────────────────────────
 
+afterEach(async () => {
+  const { _resetDb } = await import('../../db/db.js')
+  _resetDb()
+  vi.resetModules()
+  delete process.env['FINNISHER_DB_PATH']
+})
+
+async function setupDb() {
+  const home = tempDir()
+  process.env['FINNISHER_DB_PATH'] = join(home, 'db.sqlite')
+  vi.resetModules()
+  const { runMigrations } = await import('../../db/migrate.js')
+  runMigrations()
+  return home
+}
+
 describe('getThreadId', () => {
   it('reads thread id from .finn-thread file', async () => {
+    const home = await setupDb()
+    const { createThread } = await import('../../db/threads.js')
+    const thread = createThread({ title: 'T', nextAction: 'A', state: 'active', owner: 'you' })
     const { getThreadId } = await import('../common.js')
     const dir = tempDir()
-    writeFileSync(join(dir, '.finn-thread'), 'abc1234567\n')
-    expect(getThreadId(dir)).toBe('abc1234567')
+    writeFileSync(join(dir, '.finn-thread'), thread.id + '\n')
+    expect(getThreadId(dir)).toBe(thread.id)
     rmSync(dir, { recursive: true })
+    rmSync(home, { recursive: true })
   })
 
   it('returns null when .finn-thread is absent', async () => {
+    const home = await setupDb()
     const { getThreadId } = await import('../common.js')
     const dir = tempDir()
     expect(getThreadId(dir)).toBeNull()
     rmSync(dir, { recursive: true })
+    rmSync(home, { recursive: true })
   })
 
   it('returns null when .finn-thread is empty', async () => {
+    const home = await setupDb()
     const { getThreadId } = await import('../common.js')
     const dir = tempDir()
     writeFileSync(join(dir, '.finn-thread'), '   \n')
     expect(getThreadId(dir)).toBeNull()
     rmSync(dir, { recursive: true })
+    rmSync(home, { recursive: true })
   })
 })
 
@@ -227,22 +251,6 @@ describe('captureGitState', () => {
 // ── findThreadIdByGithubUrl ────────────────────────────────────────────────
 
 describe('findThreadIdByGithubUrl', () => {
-  afterEach(async () => {
-    const { _resetDb } = await import('../../db/db.js')
-    _resetDb()
-    vi.resetModules()
-    delete process.env['FINNISHER_DB_PATH']
-  })
-
-  async function setupDb() {
-    const home = tempDir()
-    process.env['FINNISHER_DB_PATH'] = join(home, 'db.sqlite')
-    vi.resetModules()
-    const { runMigrations } = await import('../../db/migrate.js')
-    runMigrations()
-    return home
-  }
-
   it('returns null when no sessions match the github URL', async () => {
     await setupDb()
     const { findThreadIdByGithubUrl } = await import('../common.js')
