@@ -4,10 +4,12 @@ import type { FocusWarning } from '../../db/threads.js'
 import type { Thread } from '../../db/schema.js'
 
 const STATE_COLORS: Record<ThreadState, (s: string) => string> = {
-  active:  chalk.green,
-  waiting: chalk.yellow,
-  blocked: chalk.red,
-  done:    chalk.gray,
+  new:      chalk.cyan,
+  open:     chalk.green,
+  waiting:  chalk.yellow,
+  blocked:  chalk.red,
+  closed:   chalk.gray,
+  archived: chalk.dim,
 }
 
 const AGENT_LABELS: Record<string, string> = {
@@ -68,9 +70,9 @@ export function printFocusWarning(w: FocusWarning): void {
   console.log('')
   const now = Date.now()
   for (const t of w.suggestions) {
-    const stalled = t.state !== 'done' && now - t.updatedAt.getTime() > 48 * 60 * 60 * 1000
+    const stalled = t.state !== 'closed' && t.state !== 'archived' && now - t.updatedAt.getTime() > 48 * 60 * 60 * 1000
     console.log(headerFn(suggestionLine(t, stalled)))
   }
   console.log('')
-  console.log(headerFn('  Run: finn done <id>   or   finn status <id> waiting'))
+  console.log(headerFn('  Run: finn done <id>   or   finn status <id> waiting   or   finn archive <id>'))
 }

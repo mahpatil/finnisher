@@ -28,7 +28,7 @@ afterEach(async () => {
 describe('handleGitPostCommit', () => {
   it('bumps updatedAt when .finn-thread exists and thread is active', async () => {
     const { createThread, getThread, handleGitPostCommit } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     const before = t.updatedAt.getTime()
 
     await new Promise(r => setTimeout(r, 5))

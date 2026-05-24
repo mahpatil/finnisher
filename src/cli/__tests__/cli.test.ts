@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { randomBytes } from 'crypto'
@@ -24,6 +24,8 @@ async function setupProgram() {
   const { register: registerSessions } = await import('../commands/sessions.js')
   const { register: registerTouch } = await import('../commands/touch.js')
   const { register: registerWeb } = await import('../commands/web.js')
+  const { register: registerArchive } = await import('../commands/archive.js')
+  const { register: registerPriority } = await import('../commands/priority.js')
 
   const program = new Command()
     .name('finn')
@@ -38,6 +40,8 @@ async function setupProgram() {
   registerSessions(program)
   registerTouch(program)
   registerWeb(program)
+  registerArchive(program)
+  registerPriority(program)
 
   const db = await import('../../db/threads.js')
   const sessionDb = await import('../../db/sessions.js')
@@ -63,9 +67,9 @@ describe('finn list', () => {
     expect(output).toContain('0 stalled')
   })
 
-  it('shows thread with active badge after adding', async () => {
+  it('shows thread title after adding', async () => {
     const { program, db } = await setupProgram()
-    db.createThread({ title: 'Ship MVP', nextAction: 'Write schema', state: 'active', owner: 'you' })
+    db.createThread({ title: 'Ship MVP', nextAction: 'Write schema', state: 'open', owner: 'you' })
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'list'])
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
@@ -74,7 +78,7 @@ describe('finn list', () => {
 
   it('shows stalled badge for stalled threads', async () => {
     const { program, db } = await setupProgram()
-    const t = db.createThread({ title: 'Old Thread', nextAction: 'Do it', state: 'active', owner: 'you' })
+    const t = db.createThread({ title: 'Old Thread', nextAction: 'Do it', state: 'open', owner: 'you' })
     const { getSqlite } = await import('../../db/db.js')
     getSqlite().prepare('UPDATE threads SET updated_at = ? WHERE id = ?').run(Date.now() - 49 * 60 * 60 * 1000, t.id)
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
@@ -85,37 +89,37 @@ describe('finn list', () => {
 
   it('filters by state when --state passed', async () => {
     const { program, db } = await setupProgram()
-    db.createThread({ title: 'Active One', nextAction: 'x', state: 'active', owner: 'you' })
+    db.createThread({ title: 'Open One', nextAction: 'x', state: 'open', owner: 'you' })
     db.createThread({ title: 'Waiting One', nextAction: 'x', state: 'waiting', owner: 'you' })
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'list', '--state', 'waiting'])
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
     expect(output).toContain('Waiting One')
-    expect(output).not.toContain('Active One')
+    expect(output).not.toContain('Open One')
   })
 
-  it('hides done threads by default', async () => {
+  it('hides archived threads by default', async () => {
     const { program, db } = await setupProgram()
-    db.createThread({ title: 'Done Thread', nextAction: 'x', state: 'done', owner: 'you' })
+    db.createThread({ title: 'Archived Thread', nextAction: 'x', state: 'archived', owner: 'you' })
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'list'])
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
-    expect(output).not.toContain('Done Thread')
+    expect(output).not.toContain('Archived Thread')
   })
 
-  it('shows done threads with --state done', async () => {
+  it('shows archived threads with --archived', async () => {
     const { program, db } = await setupProgram()
-    db.createThread({ title: 'Done Thread', nextAction: 'x', state: 'done', owner: 'you' })
+    db.createThread({ title: 'Archived Thread', nextAction: 'x', state: 'archived', owner: 'you' })
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    await program.parseAsync(['node', 'finn', 'list', '--state', 'done'])
+    await program.parseAsync(['node', 'finn', 'list', '--archived'])
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
-    expect(output).toContain('Done Thread')
+    expect(output).toContain('Archived Thread')
   })
 
-  it('shows focus warning banner for 6+ active threads', async () => {
+  it('shows focus warning banner for 6+ open threads', async () => {
     const { program, db } = await setupProgram()
     for (let i = 0; i < 6; i++) {
-      db.createThread({ title: `Thread ${i}`, nextAction: 'x', state: 'active', owner: 'you' })
+      db.createThread({ title: `Thread ${i}`, nextAction: 'x', state: 'open', owner: 'you' })
     }
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'list'])
@@ -123,10 +127,10 @@ describe('finn list', () => {
     expect(output).toContain('6 active threads')
   })
 
-  it('shows urgent red warning for 9+ active threads', async () => {
+  it('shows urgent red warning for 9+ open threads', async () => {
     const { program, db } = await setupProgram()
     for (let i = 0; i < 9; i++) {
-      db.createThread({ title: `Thread ${i}`, nextAction: 'x', state: 'active', owner: 'you' })
+      db.createThread({ title: `Thread ${i}`, nextAction: 'x', state: 'open', owner: 'you' })
     }
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'list'])
@@ -138,7 +142,7 @@ describe('finn list', () => {
 // ── finn add ───────────────────────────────────────────────────────────────
 
 describe('finn add --title --next (non-interactive)', () => {
-  it('creates a thread and prints the id', async () => {
+  it('creates a thread with open state and prints the id', async () => {
     const { program, db } = await setupProgram()
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'add', '--title', 'Ship MVP', '--next', 'Write schema'])
@@ -147,15 +151,15 @@ describe('finn add --title --next (non-interactive)', () => {
     expect(threads[0].title).toBe('Ship MVP')
     expect(threads[0].nextAction).toBe('Write schema')
     expect(threads[0].owner).toBe('you')
-    expect(threads[0].state).toBe('active')
+    expect(threads[0].state).toBe('open')
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
     expect(output).toContain(threads[0].id)
   })
 
-  it('prints focus warning when 6+ active threads after creation', async () => {
+  it('prints focus warning when 6+ open threads after creation', async () => {
     const { program, db } = await setupProgram()
     for (let i = 0; i < 5; i++) {
-      db.createThread({ title: `T${i}`, nextAction: 'x', state: 'active', owner: 'you' })
+      db.createThread({ title: `T${i}`, nextAction: 'x', state: 'open', owner: 'you' })
     }
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'add', '--title', '6th Thread', '--next', 'Start it'])
@@ -166,7 +170,7 @@ describe('finn add --title --next (non-interactive)', () => {
   it('no focus warning with 5 or fewer threads', async () => {
     const { program, db } = await setupProgram()
     for (let i = 0; i < 4; i++) {
-      db.createThread({ title: `T${i}`, nextAction: 'x', state: 'active', owner: 'you' })
+      db.createThread({ title: `T${i}`, nextAction: 'x', state: 'open', owner: 'you' })
     }
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'add', '--title', '5th Thread', '--next', 'Start it'])
@@ -180,7 +184,7 @@ describe('finn add --title --next (non-interactive)', () => {
 describe('finn next', () => {
   it('updates the next action and prints confirmation', async () => {
     const { program, db } = await setupProgram()
-    const t = db.createThread({ title: 'T', nextAction: 'old', state: 'active', owner: 'you' })
+    const t = db.createThread({ title: 'T', nextAction: 'old', state: 'open', owner: 'you' })
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'next', t.id, 'new action'])
     expect(db.getThread(t.id)?.nextAction).toBe('new action')
@@ -204,12 +208,12 @@ describe('finn next', () => {
 // ── finn done ──────────────────────────────────────────────────────────────
 
 describe('finn done', () => {
-  it('marks thread done and prints time-to-completion', async () => {
+  it('marks thread closed and prints time-to-completion', async () => {
     const { program, db } = await setupProgram()
-    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'done', t.id])
-    expect(db.getThread(t.id)?.state).toBe('done')
+    expect(db.getThread(t.id)?.state).toBe('closed')
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
     expect(output).toContain('Done.')
     expect(output).toContain('Completed in')
@@ -232,7 +236,7 @@ describe('finn done', () => {
     const { program, db } = await setupProgram()
     const threads = []
     for (let i = 0; i < 6; i++) {
-      threads.push(db.createThread({ title: `T${i}`, nextAction: 'x', state: 'active', owner: 'you' }))
+      threads.push(db.createThread({ title: `T${i}`, nextAction: 'x', state: 'open', owner: 'you' }))
     }
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'done', threads[0].id])
@@ -246,7 +250,7 @@ describe('finn done', () => {
 describe('finn status', () => {
   it('transitions state and prints confirmation', async () => {
     const { program, db } = await setupProgram()
-    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'status', t.id, 'waiting'])
     expect(db.getThread(t.id)?.state).toBe('waiting')
@@ -259,7 +263,7 @@ describe('finn status', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
     try {
-      await program.parseAsync(['node', 'finn', 'status', 'nonexistent', 'active'])
+      await program.parseAsync(['node', 'finn', 'status', 'nonexistent', 'open'])
     } catch {
       // expected
     }
@@ -269,7 +273,7 @@ describe('finn status', () => {
 
   it('exits with code 1 for invalid state', async () => {
     const { program, db } = await setupProgram()
-    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
     try {
@@ -281,14 +285,31 @@ describe('finn status', () => {
     exitSpy.mockRestore()
   })
 
-  it('prints focus warning when transitioning to active triggers overload', async () => {
+  it('rejects legacy state vocabulary', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
+    for (const legacyState of ['active', 'done']) {
+      try {
+        await program.parseAsync(['node', 'finn', 'status', t.id, legacyState])
+      } catch {
+        // expected
+      }
+      expect(process.exitCode).toBe(1)
+      process.exitCode = 0
+    }
+    exitSpy.mockRestore()
+  })
+
+  it('prints focus warning when transitioning to open triggers overload', async () => {
     const { program, db } = await setupProgram()
     for (let i = 0; i < 5; i++) {
-      db.createThread({ title: `T${i}`, nextAction: 'x', state: 'active', owner: 'you' })
+      db.createThread({ title: `T${i}`, nextAction: 'x', state: 'open', owner: 'you' })
     }
     const waiting = db.createThread({ title: 'Waiting', nextAction: 'x', state: 'waiting', owner: 'you' })
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    await program.parseAsync(['node', 'finn', 'status', waiting.id, 'active'])
+    await program.parseAsync(['node', 'finn', 'status', waiting.id, 'open'])
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
     expect(output).toContain('6 active threads')
   })
@@ -332,8 +353,8 @@ describe('finn sessions', () => {
 
   it('filters by --thread id', async () => {
     const { program, db, sessionDb } = await setupProgram()
-    const t1 = db.createThread({ title: 'T1', nextAction: 'x', state: 'active', owner: 'you' })
-    const t2 = db.createThread({ title: 'T2', nextAction: 'x', state: 'active', owner: 'you' })
+    const t1 = db.createThread({ title: 'T1', nextAction: 'x', state: 'open', owner: 'you' })
+    const t2 = db.createThread({ title: 'T2', nextAction: 'x', state: 'open', owner: 'you' })
     const now = new Date()
     sessionDb.createSession({ agent: 'claude_code', startedAt: now, threadId: t1.id })
     sessionDb.createSession({ agent: 'codex', startedAt: now, threadId: t2.id })
@@ -384,7 +405,7 @@ describe('finn sessions', () => {
 describe('finn touch', () => {
   it('runs silently and exits 0 for a valid thread', async () => {
     const { program, db } = await setupProgram()
-    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await program.parseAsync(['node', 'finn', 'touch', t.id])
     expect(spy).not.toHaveBeenCalled()
@@ -408,5 +429,131 @@ describe('finn web', () => {
     const webCmd = program.commands.find(c => c.name() === 'web')
     expect(webCmd).toBeDefined()
     expect(webCmd?.description()).toContain('localhost:3141')
+  })
+})
+
+// ── finn archive / unarchive ──────────────────────────────────────────────
+
+describe('finn archive', () => {
+  it('sets state to archived and prints confirmation', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'archive', t.id])
+    expect(db.getThread(t.id)?.state).toBe('archived')
+    expect(spy.mock.calls.some(c => String(c[0]).includes('archived'))).toBe(true)
+  })
+
+  it('works on waiting and blocked threads', async () => {
+    const { program, db } = await setupProgram()
+    const w = db.createThread({ title: 'W', nextAction: 'N', state: 'waiting', owner: 'you' })
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'archive', w.id])
+    expect(db.getThread(w.id)?.state).toBe('archived')
+  })
+
+  it('prints already-archived message when thread is already archived', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'archived', owner: 'you' })
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'archive', t.id])
+    expect(spy.mock.calls.some(c => String(c[0]).includes('already archived'))).toBe(true)
+  })
+
+  it('exits with code 1 for nonexistent thread', async () => {
+    const { program } = await setupProgram()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
+    try {
+      await program.parseAsync(['node', 'finn', 'archive', 'nonexistent'])
+    } catch { /* expected */ }
+    expect(process.exitCode).toBe(1)
+    exitSpy.mockRestore()
+  })
+})
+
+describe('finn unarchive', () => {
+  it('sets state to open and prints confirmation', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'archived', owner: 'you' })
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'unarchive', t.id])
+    expect(db.getThread(t.id)?.state).toBe('open')
+    expect(spy.mock.calls.some(c => String(c[0]).includes('unarchived'))).toBe(true)
+  })
+
+  it('exits with code 1 when thread is not archived', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
+    try {
+      await program.parseAsync(['node', 'finn', 'unarchive', t.id])
+    } catch { /* expected */ }
+    expect(process.exitCode).toBe(1)
+    exitSpy.mockRestore()
+  })
+})
+
+// ── finn priority ─────────────────────────────────────────────────────────
+
+describe('finn priority', () => {
+  it('sets priority and prints confirmation', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    expect(db.getThread(t.id)?.priority).toBe('later')
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'priority', t.id, 'now'])
+    expect(db.getThread(t.id)?.priority).toBe('now')
+    expect(spy.mock.calls.some(c => String(c[0]).includes('now'))).toBe(true)
+  })
+
+  it('exits with code 1 for invalid priority', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
+    try {
+      await program.parseAsync(['node', 'finn', 'priority', t.id, 'critical'])
+    } catch { /* expected */ }
+    expect(process.exitCode).toBe(1)
+    exitSpy.mockRestore()
+  })
+
+  it('exits with code 1 for nonexistent thread', async () => {
+    const { program } = await setupProgram()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
+    try {
+      await program.parseAsync(['node', 'finn', 'priority', 'nonexistent', 'now'])
+    } catch { /* expected */ }
+    expect(process.exitCode).toBe(1)
+    exitSpy.mockRestore()
+  })
+})
+
+// ── finn list --priority / --archived ─────────────────────────────────────
+
+describe('finn list --priority', () => {
+  it('filters to only now-priority threads', async () => {
+    const { program, db } = await setupProgram()
+    db.createThread({ title: 'Now One', nextAction: 'x', state: 'open', owner: 'you', priority: 'now' })
+    db.createThread({ title: 'Later One', nextAction: 'x', state: 'open', owner: 'you', priority: 'later' })
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'list', '--priority', 'now'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Now One')
+    expect(output).not.toContain('Later One')
+  })
+
+  it('exits with code 1 for invalid priority', async () => {
+    const { program } = await setupProgram()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
+    try {
+      await program.parseAsync(['node', 'finn', 'list', '--priority', 'critical'])
+    } catch { /* expected */ }
+    expect(process.exitCode).toBe(1)
+    exitSpy.mockRestore()
   })
 })

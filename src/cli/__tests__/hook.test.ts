@@ -33,7 +33,7 @@ afterEach(async () => {
 describe('finn hook git-post-commit', () => {
   it('touches the thread from .finn-thread in cwd', async () => {
     const { program, threads } = await setup()
-    const t = threads.createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = threads.createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     const before = t.updatedAt.getTime()
 
     const dir = join(tmpdir(), 'finn-hook-test-' + randomBytes(4).toString('hex'))
@@ -148,7 +148,7 @@ describe('finn hook opencode-start', () => {
     const dir = join(tmpdir(), 'finn-hook-test-' + randomBytes(4).toString('hex'))
     mkdirSync(dir, { recursive: true })
     // Create the thread first
-    const thread = threads.createThread({ title: 'Test', nextAction: 'N', state: 'active', owner: 'you' })
+    const thread = threads.createThread({ title: 'Test', nextAction: 'N', state: 'open', owner: 'you' })
     writeFileSync(join(dir, '.finn-thread'), thread.id)
     await program.parseAsync(['node', 'finn', 'hook', 'opencode-start', '--cwd', dir])
     const sess = sessions.getOpenSessions().filter(s => s.agent === 'opencode')
