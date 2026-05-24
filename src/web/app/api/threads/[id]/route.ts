@@ -22,6 +22,7 @@ function serialize(thread: ReturnType<typeof getThread>): ThreadWithMeta {
     completedAt: thread.completedAt?.toISOString() ?? null,
     archivedAt: thread.archivedAt?.toISOString() ?? null,
     stalled: isStalled(thread),
+    momentum: thread.momentum,
   }
 }
 

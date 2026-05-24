@@ -38,8 +38,7 @@ export function updateNextAction(id: string, nextAction: string): void {
 export function updateState(id: string, state: ThreadState): void {
   const updates: Partial<NewThread> = { state, updatedAt: new Date() }
   if (state === 'closed') updates.completedAt = new Date()
-  if (state === 'archived') updates.archivedAt = new Date()
-  if (state !== 'archived') updates.archivedAt = null
+  updates.archivedAt = state === 'archived' ? new Date() : null
   getDb().update(threads).set(updates).where(eq(threads.id, id)).run()
 }
 

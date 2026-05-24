@@ -1,6 +1,6 @@
 'use client'
 
-import Box from '@mui/material/Box'
+import Box, { type BoxProps } from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import type { ThreadData } from './ThreadCard'
@@ -12,13 +12,13 @@ interface FocusWarning {
   suggestions: ThreadData[]
 }
 
-interface Props {
+interface Props extends Pick<BoxProps, 'sx'> {
   warning: FocusWarning
-  onMarkDone: (id: string) => void
-  onSetWaiting: (id: string) => void
+  onMarkDone?: (id: string) => void
+  onSetWaiting?: (id: string) => void
 }
 
-export function FocusWarningBanner({ warning, onMarkDone, onSetWaiting }: Props) {
+export function FocusWarningBanner({ warning, onMarkDone, onSetWaiting, sx }: Props) {
   const bg = warning.level === 'urgent' ? '#fef2f2' : '#fffbeb'
   const borderColor = warning.level === 'urgent' ? '#fca5a5' : '#fcd34d'
   const textColor = warning.level === 'urgent' ? '#b91c1c' : '#92400e'
@@ -33,6 +33,7 @@ export function FocusWarningBanner({ warning, onMarkDone, onSetWaiting }: Props)
         borderRadius: 1,
         p: 2,
         mb: 2,
+        ...sx,
       }}
     >
       <Typography variant="body2" fontWeight={600} sx={{ color: textColor, mb: 1 }}>
@@ -48,14 +49,20 @@ export function FocusWarningBanner({ warning, onMarkDone, onSetWaiting }: Props)
           <Typography variant="body2" sx={{ color: textColor, flex: 1 }}>
             {s.title}
           </Typography>
-          <Box display="flex" gap={0.5}>
-            <Button size="small" variant="contained" color="success" onClick={() => onMarkDone(s.id)}>
-              Done
-            </Button>
-            <Button size="small" variant="outlined" color="warning" onClick={() => onSetWaiting(s.id)}>
-              Park
-            </Button>
-          </Box>
+          {(onMarkDone || onSetWaiting) && (
+            <Box display="flex" gap={0.5}>
+              {onMarkDone && (
+                <Button size="small" variant="contained" color="success" onClick={() => onMarkDone(s.id)}>
+                  Done
+                </Button>
+              )}
+              {onSetWaiting && (
+                <Button size="small" variant="outlined" color="warning" onClick={() => onSetWaiting(s.id)}>
+                  Park
+                </Button>
+              )}
+            </Box>
+          )}
         </Box>
       ))}
     </Box>

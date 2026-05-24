@@ -23,10 +23,7 @@ export function updateState(id, state) {
     const updates = { state, updatedAt: new Date() };
     if (state === 'closed')
         updates.completedAt = new Date();
-    if (state === 'archived')
-        updates.archivedAt = new Date();
-    if (state !== 'archived')
-        updates.archivedAt = null;
+    updates.archivedAt = state === 'archived' ? new Date() : null;
     getDb().update(threads).set(updates).where(eq(threads.id, id)).run();
 }
 export function updatePriority(id, priority) {

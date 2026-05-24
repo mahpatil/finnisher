@@ -19,6 +19,7 @@ export interface ThreadWithMeta {
   completedAt: string | null
   archivedAt: string | null
   stalled: boolean
+  momentum: number
 }
 
 export interface ThreadsResponse {
@@ -40,6 +41,7 @@ function serialize(thread: ReturnType<typeof listThreads>[number]): ThreadWithMe
     completedAt: thread.completedAt?.toISOString() ?? null,
     archivedAt: thread.archivedAt?.toISOString() ?? null,
     stalled: isStalled(thread),
+    momentum: thread.momentum,
   }
 }
 
