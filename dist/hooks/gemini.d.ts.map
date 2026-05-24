@@ -1,1 +1,1 @@
-{"version":3,"file":"gemini.d.ts","sourceRoot":"","sources":["../../src/hooks/gemini.ts"],"names":[],"mappings":"AAGA,wBAAgB,iBAAiB,CAAC,OAAO,EAAE,OAAO,EAAE,GAAG,CAAC,EAAE,MAAM,GAAG,IAAI,CAqBtE;AAED,wBAAgB,gBAAgB,CAAC,GAAG,EAAE,MAAM,EAAE,GAAG,CAAC,EAAE,MAAM,GAAG,IAAI,CA2DhE"}
+{"version":3,"file":"gemini.d.ts","sourceRoot":"","sources":["../../src/hooks/gemini.ts"],"names":[],"mappings":"AAIA,wBAAgB,iBAAiB,CAAC,OAAO,EAAE,OAAO,EAAE,GAAG,CAAC,EAAE,MAAM,GAAG,IAAI,CAsBtE;AAED,wBAAgB,gBAAgB,CAAC,GAAG,EAAE,MAAM,EAAE,GAAG,CAAC,EAAE,MAAM,GAAG,IAAI,CA6DhE"}

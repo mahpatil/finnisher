@@ -1,5 +1,6 @@
-import { appendHookLog, captureGitState, getFolderName, getGithubUrl, getThreadId } from './common.js';
+import { appendHookLog, captureGitState, getFolderName, getGithubUrl, ensureThreadId } from './common.js';
 import { closeSession, createSession, getOpenSessions } from '../db/sessions.js';
+import { touchThread } from '../db/threads.js';
 export function handleGeminiStart(payload, cwd) {
     void payload;
     try {
@@ -9,7 +10,7 @@ export function handleGeminiStart(payload, cwd) {
             return;
         const githubUrl = getGithubUrl(dir);
         const folderName = getFolderName(dir);
-        const threadId = getThreadId(dir);
+        const threadId = ensureThreadId(dir);
         const session = createSession({
             agent: 'gemini_code',
             startedAt: new Date(),
@@ -18,7 +19,9 @@ export function handleGeminiStart(payload, cwd) {
             threadId,
             projectPath: dir,
         });
-        appendHookLog(`gemini-start: created session ${session.id} folder=${folderName ?? 'null'}`);
+        if (threadId)
+            touchThread(threadId);
+        appendHookLog(`gemini-start: created session ${session.id} folder=${folderName ?? 'null'} threadId=${threadId ?? 'null'}`);
     }
     catch (err) {
         appendHookLog(`gemini-start error: ${String(err)}`);
@@ -76,6 +79,8 @@ export function handleGeminiStop(raw, cwd) {
             lastCommitMsg: gitState.lastCommitMsg,
             unpushedCount: gitState.unpushedCount,
         });
+        if (openSession.threadId)
+            touchThread(openSession.threadId);
         appendHookLog(`gemini-stop: closed session ${openSession.id} cost=${costUsd ?? 'null'} tokensIn=${tokensIn ?? 'null'}`);
     }
     catch (err) {

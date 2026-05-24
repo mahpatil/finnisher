@@ -1,3 +1,5 @@
+@../CLAUDE.md
+
 # Finnisher — Claude Code Context
 
 ## What This Is

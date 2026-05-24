@@ -1,8 +1,8 @@
-import { eq, ne, and, count } from 'drizzle-orm';
+import { eq, ne, and, count, desc } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
 const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10);
 import { getDb } from './db.js';
-import { threads } from './schema.js';
+import { threads, sessions } from './schema.js';
 const STALL_MS = 48 * 60 * 60 * 1000;
 export function listThreads() {
     return getDb().select().from(threads).all();
@@ -24,6 +24,29 @@ export function updateState(id, state) {
     if (state === 'done')
         updates.completedAt = new Date();
     getDb().update(threads).set(updates).where(eq(threads.id, id)).run();
+}
+export function updateMomentum(id, momentum) {
+    getDb().update(threads).set({ momentum, updatedAt: new Date() }).where(eq(threads.id, id)).run();
+}
+export function setStalled(id, stalled) {
+    getDb().update(threads).set({ stalled, updatedAt: new Date() }).where(eq(threads.id, id)).run();
+}
+export function findThreadIdByFolderName(folderName) {
+    // 1. Try to find via existing sessions (most recent thread first)
+    const result = getDb()
+        .select({ threadId: sessions.threadId })
+        .from(sessions)
+        .innerJoin(threads, eq(sessions.threadId, threads.id))
+        .where(eq(sessions.folderName, folderName))
+        .orderBy(desc(threads.updatedAt))
+        .limit(1)
+        .get();
+    if (result?.threadId)
+        return result.threadId;
+    // 2. Fallback: Try to find a thread with a title matching the folder name exactly (case-insensitive)
+    const all = listThreads();
+    const matching = all.find(t => t.title.toLowerCase() === folderName.toLowerCase());
+    return matching?.id ?? null;
 }
 export function touchThread(id) {
     getDb()

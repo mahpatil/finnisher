@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
 const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10);
 import { getDb } from './db.js';
@@ -12,10 +12,11 @@ export function closeSession(id, data) {
     getDb().update(sessions).set(data).where(eq(sessions.id, id)).run();
 }
 export function listSessions(opts) {
-    const base = getDb().select().from(sessions);
+    const base = getDb().select().from(sessions).orderBy(desc(sessions.startedAt));
     const conditions = [
         opts?.threadId ? eq(sessions.threadId, opts.threadId) : undefined,
         opts?.githubUrl ? eq(sessions.githubUrl, opts.githubUrl) : undefined,
+        opts?.folderName ? eq(sessions.folderName, opts.folderName) : undefined,
     ].filter(Boolean);
     const results = conditions.length > 0
         ? base.where(and(...conditions)).all()

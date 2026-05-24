@@ -6,6 +6,9 @@ export const threads = sqliteTable('threads', {
     nextAction: text('next_action').notNull(),
     owner: text('owner').$type().notNull().default('you'),
     notes: text('notes'),
+    momentum: integer('momentum').notNull().default(0),
+    stalled: integer('stalled', { mode: 'boolean' }).notNull().default(false),
+    lastVelocity: real('last_velocity'),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
     completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
@@ -14,11 +17,14 @@ export const sessions = sqliteTable('sessions', {
     id: text('id').primaryKey(),
     threadId: text('thread_id').references(() => threads.id),
     agent: text('agent').$type().notNull(),
+    agentId: text('agent_id'),
     startedAt: integer('started_at', { mode: 'timestamp_ms' }).notNull(),
     endedAt: integer('ended_at', { mode: 'timestamp_ms' }),
     tokensIn: integer('tokens_in'),
     tokensOut: integer('tokens_out'),
     costUsd: real('cost_usd'),
+    frictionScore: integer('friction_score'),
+    effortType: text('effort_type'),
     gitBranch: text('git_branch'),
     lastCommitSha: text('last_commit_sha'),
     lastCommitMsg: text('last_commit_msg'),
@@ -27,5 +33,12 @@ export const sessions = sqliteTable('sessions', {
     projectPath: text('project_path'),
     folderName: text('folder_name'),
     githubUrl: text('github_url'),
+});
+export const blockers = sqliteTable('blockers', {
+    id: text('id').primaryKey(),
+    threadId: text('thread_id').notNull().references(() => threads.id),
+    description: text('description').notNull(),
+    status: text('status').$type().notNull().default('critical'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
 //# sourceMappingURL=schema.js.map

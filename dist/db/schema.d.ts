@@ -121,6 +121,57 @@ export declare const threads: import("drizzle-orm/sqlite-core").SQLiteTableWithC
         }, {}, {
             length: number | undefined;
         }>;
+        momentum: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "momentum";
+            tableName: "threads";
+            dataType: "number";
+            columnType: "SQLiteInteger";
+            data: number;
+            driverParam: number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        stalled: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "stalled";
+            tableName: "threads";
+            dataType: "boolean";
+            columnType: "SQLiteBoolean";
+            data: boolean;
+            driverParam: number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        lastVelocity: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "last_velocity";
+            tableName: "threads";
+            dataType: "number";
+            columnType: "SQLiteReal";
+            data: number;
+            driverParam: number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         createdAt: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "created_at";
             tableName: "threads";
@@ -237,6 +288,25 @@ export declare const sessions: import("drizzle-orm/sqlite-core").SQLiteTableWith
             length: number | undefined;
             $type: AgentType;
         }>;
+        agentId: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "agent_id";
+            tableName: "sessions";
+            dataType: "string";
+            columnType: "SQLiteText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         startedAt: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "started_at";
             tableName: "sessions";
@@ -322,6 +392,42 @@ export declare const sessions: import("drizzle-orm/sqlite-core").SQLiteTableWith
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        frictionScore: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "friction_score";
+            tableName: "sessions";
+            dataType: "number";
+            columnType: "SQLiteInteger";
+            data: number;
+            driverParam: number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        effortType: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "effort_type";
+            tableName: "sessions";
+            dataType: "string";
+            columnType: "SQLiteText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         gitBranch: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "git_branch";
             tableName: "sessions";
@@ -475,8 +581,111 @@ export declare const sessions: import("drizzle-orm/sqlite-core").SQLiteTableWith
     };
     dialect: "sqlite";
 }>;
+export declare const blockers: import("drizzle-orm/sqlite-core").SQLiteTableWithColumns<{
+    name: "blockers";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "id";
+            tableName: "blockers";
+            dataType: "string";
+            columnType: "SQLiteText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        threadId: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "thread_id";
+            tableName: "blockers";
+            dataType: "string";
+            columnType: "SQLiteText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        description: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "description";
+            tableName: "blockers";
+            dataType: "string";
+            columnType: "SQLiteText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        status: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "status";
+            tableName: "blockers";
+            dataType: "string";
+            columnType: "SQLiteText";
+            data: "critical" | "retrying" | "resolved";
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+            $type: "critical" | "retrying" | "resolved";
+        }>;
+        createdAt: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "created_at";
+            tableName: "blockers";
+            dataType: "date";
+            columnType: "SQLiteTimestamp";
+            data: Date;
+            driverParam: number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "sqlite";
+}>;
 export type Thread = typeof threads.$inferSelect;
 export type NewThread = typeof threads.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
+export type Blocker = typeof blockers.$inferSelect;
+export type NewBlocker = typeof blockers.$inferInsert;
 //# sourceMappingURL=schema.d.ts.map

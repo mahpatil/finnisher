@@ -4,6 +4,7 @@ export declare function closeSession(id: string, data: Partial<NewSession>): voi
 export declare function listSessions(opts?: {
     threadId?: string;
     githubUrl?: string;
+    folderName?: string;
     limit?: number;
 }): Session[];
 export declare function getOpenSessions(): Session[];

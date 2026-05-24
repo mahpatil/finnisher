@@ -1,11 +1,12 @@
-import { appendHookLog, captureGitState, getFolderName, getGithubUrl, getThreadId } from './common.js';
+import { appendHookLog, captureGitState, getFolderName, getGithubUrl, ensureThreadId } from './common.js';
 import { closeSession, createSession, getOpenSessions } from '../db/sessions.js';
+import { touchThread } from '../db/threads.js';
 export function handleCodexStart(cwd) {
     try {
         const projectPath = cwd ?? process.cwd();
         const githubUrl = getGithubUrl(projectPath);
         const folderName = getFolderName(projectPath);
-        const threadId = getThreadId(projectPath);
+        const threadId = ensureThreadId(projectPath);
         const session = createSession({
             agent: 'codex',
             startedAt: new Date(),
@@ -14,7 +15,9 @@ export function handleCodexStart(cwd) {
             threadId,
             projectPath,
         });
-        appendHookLog(`codex-start: created session ${session.id} folder=${folderName ?? 'null'}`);
+        if (threadId)
+            touchThread(threadId);
+        appendHookLog(`codex-start: created session ${session.id} folder=${folderName ?? 'null'} threadId=${threadId ?? 'null'}`);
     }
     catch (err) {
         appendHookLog(`codex-start error: ${String(err)}`);
@@ -36,6 +39,8 @@ export function handleCodexStop(cwd) {
             lastCommitMsg: gitState.lastCommitMsg,
             unpushedCount: gitState.unpushedCount,
         });
+        if (openSession.threadId)
+            touchThread(openSession.threadId);
         appendHookLog(`codex-stop: closed session ${openSession.id}`);
     }
     catch (err) {
