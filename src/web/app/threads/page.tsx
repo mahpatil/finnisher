@@ -100,6 +100,11 @@ export default function ThreadsPage() {
     await mutateAll()
   }
 
+  async function updatePriority(id: string, priority: string) {
+    await patchThread(id, { priority })
+    await mutateAll()
+  }
+
   if (selectedThreadId && selectedThread) {
     return (
       <LayoutShell>
@@ -107,6 +112,7 @@ export default function ThreadsPage() {
           thread={selectedThread}
           sessions={threadSessions}
           onBack={() => setSelectedThreadId(null)}
+          onUpdatePriority={updatePriority}
         />
       </LayoutShell>
     )
@@ -180,6 +186,7 @@ export default function ThreadsPage() {
               onMarkDone={markDone}
               onArchive={archiveThread}
               onUnarchive={unarchiveThread}
+              onUpdatePriority={updatePriority}
               onClick={() => setSelectedThreadId(t.id)}
             />
           </Grid>

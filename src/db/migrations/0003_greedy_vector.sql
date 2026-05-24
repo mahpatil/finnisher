@@ -25,8 +25,6 @@ INSERT INTO `__new_sessions` SELECT `id`, `thread_id`, `agent`, `started_at`, `e
 --> statement-breakpoint
 DROP TABLE `sessions`;
 --> statement-breakpoint
-ALTER TABLE `__new_sessions` RENAME TO `sessions`;
---> statement-breakpoint
 -- Recreate blockers without FK so we can drop threads below
 CREATE TABLE `__new_blockers` (
 	`id` text PRIMARY KEY NOT NULL,

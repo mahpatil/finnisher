@@ -1,11 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
 import WarningIcon from '@mui/icons-material/Warning'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
@@ -37,6 +40,7 @@ interface Props {
   onArchive?: (id: string) => void
   onUnarchive?: (id: string) => void
   onUpdateNextAction?: (id: string, nextAction: string) => void
+  onUpdatePriority?: (id: string, priority: string) => void
   onClick?: () => void
 }
 
@@ -47,7 +51,8 @@ const PRIORITY_STYLES: Record<string, { label: string; color: string; bg: string
   out:   { label: 'OUT',   color: '#757575', bg: 'rgba(117,117,117,0.12)' },
 }
 
-export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaiting, onArchive, onUnarchive, onUpdateNextAction, onClick }: Props) {
+export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaiting, onArchive, onUnarchive, onUpdateNextAction, onUpdatePriority, onClick }: Props) {
+  const [priorityAnchor, setPriorityAnchor] = useState<HTMLElement | null>(null)
   const isStalled = thread.stalled && thread.state !== 'closed' && thread.state !== 'archived'
   const isArchived = thread.state === 'archived'
   const isClosed = thread.state === 'closed'
@@ -109,6 +114,7 @@ export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaitin
               data-testid="priority-badge"
               label={priority.label}
               size="small"
+              onClick={onUpdatePriority ? e => { e.stopPropagation(); setPriorityAnchor(e.currentTarget) } : undefined}
               sx={{
                 fontSize: '9px',
                 fontWeight: 800,
@@ -117,8 +123,29 @@ export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaitin
                 color: priority.color,
                 border: `1px solid ${priority.color}40`,
                 letterSpacing: '0.05em',
+                cursor: onUpdatePriority ? 'pointer' : 'default',
               }}
             />
+            {onUpdatePriority && (
+              <Menu
+                anchorEl={priorityAnchor}
+                open={Boolean(priorityAnchor)}
+                onClose={() => setPriorityAnchor(null)}
+                onClick={e => e.stopPropagation()}
+              >
+                {Object.entries(PRIORITY_STYLES).map(([key, s]) => (
+                  <MenuItem
+                    key={key}
+                    data-testid={`priority-option-${key}`}
+                    selected={thread.priority === key}
+                    onClick={() => { onUpdatePriority(thread.id, key); setPriorityAnchor(null) }}
+                    sx={{ fontSize: '0.75rem', fontWeight: 700, color: s.color }}
+                  >
+                    {s.label}
+                  </MenuItem>
+                ))}
+              </Menu>
+            )}
           </Box>
         </Box>
 

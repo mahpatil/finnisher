@@ -86,6 +86,11 @@ export default function Dashboard() {
     await mutateAll()
   }
 
+  async function updatePriority(id: string, priority: string) {
+    await patchThread(id, { priority })
+    await mutateAll()
+  }
+
   if (selectedThreadId && selectedThread) {
     return (
       <LayoutShell>
@@ -93,6 +98,7 @@ export default function Dashboard() {
           thread={selectedThread}
           sessions={threadSessions}
           onBack={() => setSelectedThreadId(null)}
+          onUpdatePriority={updatePriority}
         />
       </LayoutShell>
     )
@@ -187,6 +193,7 @@ export default function Dashboard() {
                   onSetWaiting={setWaiting}
                   onArchive={archiveThread}
                   onUpdateNextAction={updateNextAction}
+                  onUpdatePriority={updatePriority}
                   onClick={() => setSelectedThreadId(t.id)}
                 />
               </Grid>

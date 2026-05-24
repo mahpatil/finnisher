@@ -6,19 +6,27 @@ import Typography from '@mui/material/Typography'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
 import { alpha } from '@mui/material/styles'
 import BoltIcon from '@mui/icons-material/Bolt'
 import WarningIcon from '@mui/icons-material/Warning'
 import { ThreadData } from './ThreadCard'
 import { SessionCard, SessionData } from './SessionCard'
 
+const PRIORITIES = ['now', 'next', 'later', 'out'] as const
+const PRIORITY_LABELS: Record<string, string> = { now: 'NOW', next: 'NEXT', later: 'LATER', out: 'OUT' }
+
 interface Props {
   thread: ThreadData
   sessions: SessionData[]
   onBack: () => void
+  onUpdatePriority?: (id: string, priority: string) => void
 }
 
-export function ThreadDetail({ thread, sessions, onBack }: Props) {
+export function ThreadDetail({ thread, sessions, onBack, onUpdatePriority }: Props) {
   const totalCost = sessions.reduce((acc, s) => acc + (s.costUsd ?? 0), 0)
   const totalTokens = sessions.reduce((acc, s) => acc + (s.tokensIn ?? 0) + (s.tokensOut ?? 0), 0)
 
@@ -104,23 +112,32 @@ export function ThreadDetail({ thread, sessions, onBack }: Props) {
               </Box>
             </Box>
 
-            {/* Context Snapshot */}
+            {/* Priority */}
             <Box sx={{ p: 3, bgcolor: alpha('#1A1A1A', 0.4), borderRadius: 2, border: '0.5px solid', borderColor: 'divider' }}>
-              <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 2 }}>Context Snapshot</Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: alpha('#fff', 0.05), pb: 1 }}>
-                  <Typography variant="caption" color="text.secondary">Main Branch</Typography>
-                  <Typography variant="caption" color="primary.main" sx={{ fontFamily: '"JetBrains Mono", monospace' }}>main</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: alpha('#fff', 0.05), pb: 1 }}>
-                  <Typography variant="caption" color="text.secondary">Active Agents</Typography>
-                  <Typography variant="caption" sx={{ fontFamily: '"JetBrains Mono", monospace' }}>01</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" color="text.secondary">Last Deployment</Typography>
-                  <Typography variant="caption" sx={{ fontFamily: '"JetBrains Mono", monospace' }}>14:22:01</Typography>
-                </Box>
-              </Box>
+              <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 2 }}>Priority</Typography>
+              {onUpdatePriority ? (
+                <FormControl fullWidth size="small">
+                  <InputLabel id="priority-label" sx={{ fontSize: '0.75rem' }}>Priority</InputLabel>
+                  <Select
+                    labelId="priority-label"
+                    data-testid="priority-select"
+                    value={thread.priority}
+                    label="Priority"
+                    onChange={e => onUpdatePriority(thread.id, e.target.value)}
+                    sx={{ fontSize: '0.75rem' }}
+                  >
+                    {PRIORITIES.map(p => (
+                      <MenuItem key={p} value={p} sx={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                        {PRIORITY_LABELS[p]}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              ) : (
+                <Typography variant="body2" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                  {PRIORITY_LABELS[thread.priority] ?? thread.priority}
+                </Typography>
+              )}
             </Box>
           </Box>
         </Grid>

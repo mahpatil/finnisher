@@ -122,6 +122,79 @@ describe('updateState', () => {
     updateState(t.id, 'waiting')
     expect(getThread(t.id)!.completedAt).toBeNull()
   })
+
+  it('sets archivedAt when transitioning to archived', async () => {
+    const { createThread, updateState, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    updateState(t.id, 'archived')
+    const archived = getThread(t.id)!
+    expect(archived.state).toBe('archived')
+    expect(archived.archivedAt).toBeInstanceOf(Date)
+  })
+
+  it('clears archivedAt when transitioning away from archived', async () => {
+    const { createThread, updateState, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    updateState(t.id, 'archived')
+    expect(getThread(t.id)!.archivedAt).toBeInstanceOf(Date)
+    updateState(t.id, 'open')
+    expect(getThread(t.id)!.archivedAt).toBeNull()
+  })
+
+  it('does not set archivedAt for non-archived transitions', async () => {
+    const { createThread, updateState, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    updateState(t.id, 'blocked')
+    expect(getThread(t.id)!.archivedAt).toBeNull()
+  })
+})
+
+// ── archiveThread / unarchiveThread ────────────────────────────────────────
+
+describe('archiveThread', () => {
+  it('sets state to archived and records archivedAt', async () => {
+    const { createThread, archiveThread, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    archiveThread(t.id)
+    const archived = getThread(t.id)!
+    expect(archived.state).toBe('archived')
+    expect(archived.archivedAt).toBeInstanceOf(Date)
+  })
+})
+
+describe('unarchiveThread', () => {
+  it('sets state back to open and clears archivedAt', async () => {
+    const { createThread, archiveThread, unarchiveThread, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    archiveThread(t.id)
+    unarchiveThread(t.id)
+    const restored = getThread(t.id)!
+    expect(restored.state).toBe('open')
+    expect(restored.archivedAt).toBeNull()
+  })
+})
+
+// ── updatePriority ─────────────────────────────────────────────────────────
+
+describe('updatePriority', () => {
+  it('updates priority and bumps updatedAt', async () => {
+    const { createThread, updatePriority, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', priority: 'later', owner: 'you' })
+    await new Promise(r => setTimeout(r, 5))
+    updatePriority(t.id, 'now')
+    const updated = getThread(t.id)!
+    expect(updated.priority).toBe('now')
+    expect(updated.updatedAt.getTime()).toBeGreaterThan(t.updatedAt.getTime())
+  })
+
+  it('accepts all valid priority values', async () => {
+    const { createThread, updatePriority, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    for (const p of ['now', 'next', 'later', 'out'] as const) {
+      updatePriority(t.id, p)
+      expect(getThread(t.id)!.priority).toBe(p)
+    }
+  })
 })
 
 // ── updateNextAction ───────────────────────────────────────────────────────
