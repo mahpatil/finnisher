@@ -23,7 +23,8 @@ export function ThreadForm({ open, onClose, onCreated }: Props) {
   const [title, setTitle] = useState('')
   const [nextAction, setNextAction] = useState('')
   const [owner, setOwner] = useState('you')
-  const [state, setState] = useState('active')
+  const [state, setState] = useState('open')
+  const [priority, setPriority] = useState('later')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -38,13 +39,13 @@ export function ThreadForm({ open, onClose, onCreated }: Props) {
       const res = await fetch('/api/threads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), nextAction: nextAction.trim(), owner, state }),
+        body: JSON.stringify({ title: title.trim(), nextAction: nextAction.trim(), owner, state, priority }),
       })
       if (!res.ok) {
         const data = await res.json() as { error?: string }
         setError(data.error ?? 'Failed to create thread')
       } else {
-        setTitle(''); setNextAction(''); setOwner('you'); setState('active'); setError(null)
+        setTitle(''); setNextAction(''); setOwner('you'); setState('open'); setPriority('later'); setError(null)
         onCreated()
         onClose()
       }
@@ -84,9 +85,19 @@ export function ThreadForm({ open, onClose, onCreated }: Props) {
         <FormControl fullWidth margin="normal">
           <InputLabel>State</InputLabel>
           <Select value={state} label="State" onChange={e => setState(e.target.value)}>
-            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="new">New</MenuItem>
+            <MenuItem value="open">Open</MenuItem>
             <MenuItem value="waiting">Waiting</MenuItem>
             <MenuItem value="blocked">Blocked</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Priority</InputLabel>
+          <Select value={priority} label="Priority" onChange={e => setPriority(e.target.value)}>
+            <MenuItem value="now">NOW — do it today</MenuItem>
+            <MenuItem value="next">NEXT — up after NOW</MenuItem>
+            <MenuItem value="later">LATER — backlog</MenuItem>
+            <MenuItem value="out">OUT — parked / won&apos;t do</MenuItem>
           </Select>
         </FormControl>
         {error && (

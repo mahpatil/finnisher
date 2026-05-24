@@ -12,7 +12,8 @@ export async function seedThread(
   request: APIRequestContext,
   opts: {
     title?: string
-    state?: 'active' | 'waiting' | 'blocked' | 'done'
+    state?: 'new' | 'open' | 'waiting' | 'blocked' | 'closed' | 'archived'
+    priority?: 'now' | 'next' | 'later' | 'out'
     nextAction?: string
     owner?: 'you' | 'ai_agent' | 'other'
     stale?: boolean
@@ -24,7 +25,8 @@ export async function seedThread(
     data: {
       title: rest.title ?? 'Test thread',
       nextAction: rest.nextAction ?? 'Do something',
-      state: rest.state ?? 'active',
+      state: rest.state ?? 'open',
+      priority: rest.priority ?? 'later',
       owner: rest.owner ?? 'you',
       ...(stale ? { updatedAt: new Date(Date.now() - 72 * 3_600_000).toISOString() } : {}),
       ...(rest.completedAt ? { completedAt: rest.completedAt } : {}),

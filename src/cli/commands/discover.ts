@@ -121,7 +121,7 @@ export function register(program: Command): void {
           const thread = createThread({
             title: title as string,
             nextAction: `Set up development workflow for ${project.folderName}`,
-            state: 'active',
+            state: 'open',
             owner: 'you'
           })
 
