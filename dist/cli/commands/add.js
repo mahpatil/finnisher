@@ -12,7 +12,7 @@ export function register(program) {
             const thread = createThread({
                 title: opts.title,
                 nextAction: opts.next,
-                state: 'active',
+                state: 'open',
                 owner: 'you',
             });
             console.log(`Created thread: ${thread.id}`);
@@ -55,11 +55,12 @@ export function register(program) {
         const state = await p.select({
             message: 'State',
             options: [
-                { value: 'active', label: 'Active' },
+                { value: 'new', label: 'New' },
+                { value: 'open', label: 'Open' },
                 { value: 'waiting', label: 'Waiting' },
                 { value: 'blocked', label: 'Blocked' },
             ],
-            initialValue: 'active',
+            initialValue: 'open',
         });
         if (p.isCancel(state)) {
             console.log('Cancelled.');

@@ -8,23 +8,30 @@ function makeThread(overrides: Partial<Thread> = {}): Thread {
   return {
     id: 'abc123xyz0',
     title: 'Test Thread',
-    state: 'active',
+    state: 'open',
     nextAction: 'Do something',
     owner: 'you',
+    priority: 'later',
     notes: null,
+    momentum: 0,
+    stalled: false,
+    lastVelocity: null,
     createdAt: now,
     updatedAt: now,
     completedAt: null,
+    archivedAt: null,
     ...overrides,
   }
 }
 
 describe('stateBadge', () => {
   it('returns colored string for each state', () => {
-    expect(stateBadge('active')).toContain('active')
+    expect(stateBadge('new')).toContain('new')
+    expect(stateBadge('open')).toContain('open')
     expect(stateBadge('waiting')).toContain('waiting')
     expect(stateBadge('blocked')).toContain('blocked')
-    expect(stateBadge('done')).toContain('done')
+    expect(stateBadge('closed')).toContain('closed')
+    expect(stateBadge('archived')).toContain('archived')
   })
 })
 

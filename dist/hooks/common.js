@@ -154,7 +154,7 @@ export function ensureThreadId(cwd = process.cwd()) {
         const thread = createThread({
             title: `${folderName} Development`,
             nextAction: 'Continue development',
-            state: 'active',
+            state: 'open',
             owner: 'you',
         });
         try {

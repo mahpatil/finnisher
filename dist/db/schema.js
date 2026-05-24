@@ -1,17 +1,21 @@
 import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+export const THREAD_STATES = ['new', 'open', 'waiting', 'blocked', 'closed', 'archived'];
+export const THREAD_PRIORITIES = ['now', 'next', 'later', 'out'];
 export const threads = sqliteTable('threads', {
     id: text('id').primaryKey(),
     title: text('title').notNull(),
-    state: text('state').$type().notNull().default('active'),
+    state: text('state').$type().notNull().default('open'),
     nextAction: text('next_action').notNull(),
     owner: text('owner').$type().notNull().default('you'),
     notes: text('notes'),
+    priority: text('priority').$type().notNull().default('later'),
     momentum: integer('momentum').notNull().default(0),
     stalled: integer('stalled', { mode: 'boolean' }).notNull().default(false),
     lastVelocity: real('last_velocity'),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
     completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
+    archivedAt: integer('archived_at', { mode: 'timestamp_ms' }),
 });
 export const sessions = sqliteTable('sessions', {
     id: text('id').primaryKey(),

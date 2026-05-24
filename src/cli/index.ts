@@ -12,6 +12,8 @@ import { register as registerWeb } from './commands/web.js'
 import { register as registerHook } from './commands/hook.js'
 import { register as registerSetup } from './commands/setup.js'
 import { register as registerDiscover } from './commands/discover.js'
+import { register as registerArchive } from './commands/archive.js'
+import { register as registerPriority } from './commands/priority.js'
 
 runMigrations()
 
@@ -31,5 +33,7 @@ registerWeb(program)
 registerHook(program)
 registerSetup(program)
 registerDiscover(program)
+registerArchive(program)
+registerPriority(program)
 
 program.parse()

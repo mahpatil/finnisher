@@ -1,6 +1,9 @@
-export type ThreadState = 'active' | 'waiting' | 'blocked' | 'done';
+export type ThreadState = 'new' | 'open' | 'waiting' | 'blocked' | 'closed' | 'archived';
+export type ThreadPriority = 'now' | 'next' | 'later' | 'out';
 export type ThreadOwner = 'you' | 'ai_agent' | 'other';
 export type AgentType = 'claude_code' | 'codex' | 'opencode' | 'gemini_code' | 'manual';
+export declare const THREAD_STATES: readonly ["new", "open", "waiting", "blocked", "closed", "archived"];
+export declare const THREAD_PRIORITIES: readonly ["now", "next", "later", "out"];
 export declare const threads: import("drizzle-orm/sqlite-core").SQLiteTableWithColumns<{
     name: "threads";
     schema: undefined;
@@ -121,6 +124,26 @@ export declare const threads: import("drizzle-orm/sqlite-core").SQLiteTableWithC
         }, {}, {
             length: number | undefined;
         }>;
+        priority: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "priority";
+            tableName: "threads";
+            dataType: "string";
+            columnType: "SQLiteText";
+            data: ThreadPriority;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+            $type: ThreadPriority;
+        }>;
         momentum: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "momentum";
             tableName: "threads";
@@ -208,6 +231,23 @@ export declare const threads: import("drizzle-orm/sqlite-core").SQLiteTableWithC
         }, {}, {}>;
         completedAt: import("drizzle-orm/sqlite-core").SQLiteColumn<{
             name: "completed_at";
+            tableName: "threads";
+            dataType: "date";
+            columnType: "SQLiteTimestamp";
+            data: Date;
+            driverParam: number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        archivedAt: import("drizzle-orm/sqlite-core").SQLiteColumn<{
+            name: "archived_at";
             tableName: "threads";
             dataType: "date";
             columnType: "SQLiteTimestamp";

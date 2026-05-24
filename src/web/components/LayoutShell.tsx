@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
 import AppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
 import List from '@mui/material/List'
 import Typography from '@mui/material/Typography'
-import Divider from '@mui/material/Divider'
 import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
@@ -18,14 +18,13 @@ import Avatar from '@mui/material/Avatar'
 import { alpha, styled } from '@mui/material/styles'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
-import HistoryIcon from '@mui/icons-material/History'
 import SpeedIcon from '@mui/icons-material/Speed'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
+import HistoryIcon from '@mui/icons-material/History'
 import NotificationsIcon from '@mui/icons-material/Notifications'
 import SettingsIcon from '@mui/icons-material/Settings'
 import SearchIcon from '@mui/icons-material/Search'
 import TerminalIcon from '@mui/icons-material/Terminal'
-import InfoIcon from '@mui/icons-material/Info'
 import DescriptionIcon from '@mui/icons-material/Description'
 import HelpIcon from '@mui/icons-material/Help'
 
@@ -72,13 +71,22 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }))
 
+const NAV_ITEMS = [
+  { path: '/',             label: 'Overview',          icon: <DashboardIcon /> },
+  { path: '/threads',      label: 'Threads',            icon: <AccountTreeIcon /> },
+  { path: '/sessions',     label: 'Sessions',           icon: <HistoryIcon /> },
+  { path: '/insights',     label: 'Execution Insights', icon: <SpeedIcon /> },
+  { path: '/optimization', label: 'Optimization',       icon: <SmartToyIcon /> },
+] as const
+
 interface LayoutShellProps {
   children: React.ReactNode
-  currentTab: string
-  onTabChange: (tab: string) => void
 }
 
-export function LayoutShell({ children, currentTab, onTabChange }: LayoutShellProps) {
+export function LayoutShell({ children }: LayoutShellProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+
   return (
     <Box sx={{ display: 'flex' }}>
       <Drawer
@@ -106,16 +114,11 @@ export function LayoutShell({ children, currentTab, onTabChange }: LayoutShellPr
         </Box>
 
         <List sx={{ flexGrow: 1 }}>
-          {[
-            { id: 'dashboard', label: 'Overview', icon: <DashboardIcon /> },
-            { id: 'threads', label: 'Threads', icon: <AccountTreeIcon /> },
-            { id: 'insights', label: 'Execution Insights', icon: <SpeedIcon /> },
-            { id: 'optimization', label: 'Optimization', icon: <SmartToyIcon /> },
-          ].map((item) => (
-            <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
+          {NAV_ITEMS.map((item) => (
+            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
-                selected={currentTab === item.id}
-                onClick={() => onTabChange(item.id)}
+                selected={pathname === item.path}
+                onClick={() => router.push(item.path)}
                 sx={{
                   borderRadius: 1,
                   '&.Mui-selected': {
@@ -131,9 +134,9 @@ export function LayoutShell({ children, currentTab, onTabChange }: LayoutShellPr
                 <ListItemIcon sx={{ minWidth: 40, color: 'text.secondary' }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText 
-                  primary={item.label} 
-                  slotProps={{ primary: { variant: 'overline', sx: { fontSize: '0.625rem', letterSpacing: '0.05em' } } }} 
+                <ListItemText
+                  primary={item.label}
+                  slotProps={{ primary: { variant: 'overline', sx: { fontSize: '0.625rem', letterSpacing: '0.05em' } } }}
                 />
               </ListItemButton>
             </ListItem>

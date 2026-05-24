@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { existsSync, rmSync } from 'fs'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { randomBytes } from 'crypto'
@@ -29,7 +28,7 @@ afterEach(async () => {
 describe('createThread', () => {
   it('persists a thread and returns it with a 10-char id', async () => {
     const { createThread, getThread } = await setup()
-    const t = createThread({ title: 'Ship MVP', nextAction: 'Write schema', state: 'active', owner: 'you' })
+    const t = createThread({ title: 'Ship MVP', nextAction: 'Write schema', state: 'open', owner: 'you' })
     expect(t.id).toHaveLength(10)
     expect(t.title).toBe('Ship MVP')
     expect(t.nextAction).toBe('Write schema')
@@ -39,24 +38,24 @@ describe('createThread', () => {
   it('sets createdAt and updatedAt to now', async () => {
     const { createThread } = await setup()
     const before = Date.now()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     const after = Date.now()
     expect(t.createdAt.getTime()).toBeGreaterThanOrEqual(before)
     expect(t.createdAt.getTime()).toBeLessThanOrEqual(after)
     expect(t.updatedAt.getTime()).toBeGreaterThanOrEqual(before)
   })
 
-  it('always succeeds regardless of how many active threads exist', async () => {
+  it('always succeeds regardless of how many open threads exist', async () => {
     const { createThread, listThreads } = await setup()
     for (let i = 0; i < 10; i++) {
-      createThread({ title: `Thread ${i}`, nextAction: 'Do it', state: 'active', owner: 'you' })
+      createThread({ title: `Thread ${i}`, nextAction: 'Do it', state: 'open', owner: 'you' })
     }
-    expect(listThreads().filter(t => t.state === 'active')).toHaveLength(10)
+    expect(listThreads().filter(t => t.state === 'open')).toHaveLength(10)
   })
 
   it('accepts empty strings (validation is the CLI layer responsibility)', async () => {
     const { createThread } = await setup()
-    expect(() => createThread({ title: '', nextAction: '', state: 'active', owner: 'you' })).not.toThrow()
+    expect(() => createThread({ title: '', nextAction: '', state: 'open', owner: 'you' })).not.toThrow()
   })
 })
 
@@ -65,7 +64,7 @@ describe('createThread', () => {
 describe('listThreads', () => {
   it('returns all threads', async () => {
     const { createThread, listThreads } = await setup()
-    createThread({ title: 'A', nextAction: 'x', state: 'active', owner: 'you' })
+    createThread({ title: 'A', nextAction: 'x', state: 'open', owner: 'you' })
     createThread({ title: 'B', nextAction: 'x', state: 'waiting', owner: 'you' })
     expect(listThreads()).toHaveLength(2)
   })
@@ -81,9 +80,9 @@ describe('getThread', () => {
 // ── touchThread ────────────────────────────────────────────────────────────
 
 describe('touchThread', () => {
-  it('bumps updatedAt for a non-done thread without changing other fields', async () => {
+  it('bumps updatedAt for an open thread without changing other fields', async () => {
     const { createThread, touchThread, getThread } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     await new Promise(r => setTimeout(r, 5))
     touchThread(t.id)
     const updated = getThread(t.id)!
@@ -93,35 +92,108 @@ describe('touchThread', () => {
     expect(updated.state).toBe(t.state)
   })
 
-  it('is a no-op for a done thread', async () => {
+  it('is a no-op for a closed thread', async () => {
     const { createThread, updateState, touchThread, getThread } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
-    updateState(t.id, 'done')
-    const doneBefore = getThread(t.id)!.updatedAt.getTime()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    updateState(t.id, 'closed')
+    const closedBefore = getThread(t.id)!.updatedAt.getTime()
     await new Promise(r => setTimeout(r, 5))
     touchThread(t.id)
-    expect(getThread(t.id)!.updatedAt.getTime()).toBe(doneBefore)
+    expect(getThread(t.id)!.updatedAt.getTime()).toBe(closedBefore)
   })
 })
 
 // ── updateState ────────────────────────────────────────────────────────────
 
 describe('updateState', () => {
-  it('sets completedAt when transitioning to done', async () => {
+  it('sets completedAt when transitioning to closed', async () => {
     const { createThread, updateState, getThread } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     expect(t.completedAt).toBeNull()
-    updateState(t.id, 'done')
-    const done = getThread(t.id)!
-    expect(done.state).toBe('done')
-    expect(done.completedAt).toBeInstanceOf(Date)
+    updateState(t.id, 'closed')
+    const closed = getThread(t.id)!
+    expect(closed.state).toBe('closed')
+    expect(closed.completedAt).toBeInstanceOf(Date)
   })
 
-  it('does not set completedAt for non-done transitions', async () => {
+  it('does not set completedAt for non-closed transitions', async () => {
     const { createThread, updateState, getThread } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     updateState(t.id, 'waiting')
     expect(getThread(t.id)!.completedAt).toBeNull()
+  })
+
+  it('sets archivedAt when transitioning to archived', async () => {
+    const { createThread, updateState, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    updateState(t.id, 'archived')
+    const archived = getThread(t.id)!
+    expect(archived.state).toBe('archived')
+    expect(archived.archivedAt).toBeInstanceOf(Date)
+  })
+
+  it('clears archivedAt when transitioning away from archived', async () => {
+    const { createThread, updateState, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    updateState(t.id, 'archived')
+    expect(getThread(t.id)!.archivedAt).toBeInstanceOf(Date)
+    updateState(t.id, 'open')
+    expect(getThread(t.id)!.archivedAt).toBeNull()
+  })
+
+  it('does not set archivedAt for non-archived transitions', async () => {
+    const { createThread, updateState, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    updateState(t.id, 'blocked')
+    expect(getThread(t.id)!.archivedAt).toBeNull()
+  })
+})
+
+// ── archiveThread / unarchiveThread ────────────────────────────────────────
+
+describe('archiveThread', () => {
+  it('sets state to archived and records archivedAt', async () => {
+    const { createThread, archiveThread, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    archiveThread(t.id)
+    const archived = getThread(t.id)!
+    expect(archived.state).toBe('archived')
+    expect(archived.archivedAt).toBeInstanceOf(Date)
+  })
+})
+
+describe('unarchiveThread', () => {
+  it('sets state back to open and clears archivedAt', async () => {
+    const { createThread, archiveThread, unarchiveThread, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    archiveThread(t.id)
+    unarchiveThread(t.id)
+    const restored = getThread(t.id)!
+    expect(restored.state).toBe('open')
+    expect(restored.archivedAt).toBeNull()
+  })
+})
+
+// ── updatePriority ─────────────────────────────────────────────────────────
+
+describe('updatePriority', () => {
+  it('updates priority and bumps updatedAt', async () => {
+    const { createThread, updatePriority, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', priority: 'later', owner: 'you' })
+    await new Promise(r => setTimeout(r, 5))
+    updatePriority(t.id, 'now')
+    const updated = getThread(t.id)!
+    expect(updated.priority).toBe('now')
+    expect(updated.updatedAt.getTime()).toBeGreaterThan(t.updatedAt.getTime())
+  })
+
+  it('accepts all valid priority values', async () => {
+    const { createThread, updatePriority, getThread } = await setup()
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    for (const p of ['now', 'next', 'later', 'out'] as const) {
+      updatePriority(t.id, p)
+      expect(getThread(t.id)!.priority).toBe(p)
+    }
   })
 })
 
@@ -130,7 +202,7 @@ describe('updateState', () => {
 describe('updateNextAction', () => {
   it('updates nextAction and bumps updatedAt', async () => {
     const { createThread, updateNextAction, getThread } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'old', state: 'active', owner: 'you' })
+    const t = createThread({ title: 'T', nextAction: 'old', state: 'open', owner: 'you' })
     await new Promise(r => setTimeout(r, 5))
     updateNextAction(t.id, 'new action')
     const updated = getThread(t.id)!
@@ -142,10 +214,9 @@ describe('updateNextAction', () => {
 // ── isStalled ──────────────────────────────────────────────────────────────
 
 describe('isStalled', () => {
-  it('returns true for a non-done thread untouched for more than 48h', async () => {
+  it('returns true for an open thread untouched for more than 48h', async () => {
     const { createThread, isStalled, getThread } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
-    // Manually set updatedAt to 49h ago in DB
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     const { getSqlite } = await import('../db.js')
     const staleTime = Date.now() - 49 * 60 * 60 * 1000
     getSqlite().prepare('UPDATE threads SET updated_at = ? WHERE id = ?').run(staleTime, t.id)
@@ -155,23 +226,23 @@ describe('isStalled', () => {
 
   it('returns false for a thread touched less than 48h ago', async () => {
     const { createThread, isStalled } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     expect(isStalled(t)).toBe(false)
   })
 
   it('returns false at exactly the 48h boundary (strict >)', async () => {
     const { createThread, isStalled, getThread } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     const { getSqlite } = await import('../db.js')
     const justUnder48h = Date.now() - 48 * 60 * 60 * 1000 + 5000
     getSqlite().prepare('UPDATE threads SET updated_at = ? WHERE id = ?').run(justUnder48h, t.id)
     expect(isStalled(getThread(t.id)!)).toBe(false)
   })
 
-  it('returns false for a done thread even if very old', async () => {
+  it('returns false for a closed thread even if very old', async () => {
     const { createThread, updateState, isStalled, getThread } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
-    updateState(t.id, 'done')
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    updateState(t.id, 'closed')
     const { getSqlite } = await import('../db.js')
     getSqlite().prepare('UPDATE threads SET updated_at = ? WHERE id = ?').run(0, t.id)
     expect(isStalled(getThread(t.id)!)).toBe(false)
@@ -181,36 +252,36 @@ describe('isStalled', () => {
 // ── overloadWarning ────────────────────────────────────────────────────────
 
 describe('overloadWarning', () => {
-  it('returns null when active threads is 5 or fewer', async () => {
+  it('returns null when open threads is 5 or fewer', async () => {
     const { createThread, listThreads, overloadWarning } = await setup()
     for (let i = 0; i < 5; i++) {
-      createThread({ title: `T${i}`, nextAction: 'N', state: 'active', owner: 'you' })
+      createThread({ title: `T${i}`, nextAction: 'N', state: 'open', owner: 'you' })
     }
     expect(overloadWarning(listThreads())).toBeNull()
   })
 
-  it('returns caution level when active count is 6', async () => {
+  it('returns caution level when open count is 6', async () => {
     const { createThread, listThreads, overloadWarning } = await setup()
     for (let i = 0; i < 6; i++) {
-      createThread({ title: `T${i}`, nextAction: 'N', state: 'active', owner: 'you' })
+      createThread({ title: `T${i}`, nextAction: 'N', state: 'open', owner: 'you' })
     }
     const w = overloadWarning(listThreads())
     expect(w?.level).toBe('caution')
     expect(w?.count).toBe(6)
   })
 
-  it('returns caution level when active count is 8', async () => {
+  it('returns caution level when open count is 8', async () => {
     const { createThread, listThreads, overloadWarning } = await setup()
     for (let i = 0; i < 8; i++) {
-      createThread({ title: `T${i}`, nextAction: 'N', state: 'active', owner: 'you' })
+      createThread({ title: `T${i}`, nextAction: 'N', state: 'open', owner: 'you' })
     }
     expect(overloadWarning(listThreads())?.level).toBe('caution')
   })
 
-  it('returns urgent level when active count is 9 or more', async () => {
+  it('returns urgent level when open count is 9 or more', async () => {
     const { createThread, listThreads, overloadWarning } = await setup()
     for (let i = 0; i < 9; i++) {
-      createThread({ title: `T${i}`, nextAction: 'N', state: 'active', owner: 'you' })
+      createThread({ title: `T${i}`, nextAction: 'N', state: 'open', owner: 'you' })
     }
     expect(overloadWarning(listThreads())?.level).toBe('urgent')
   })
@@ -219,24 +290,22 @@ describe('overloadWarning', () => {
     const { createThread, listThreads, overloadWarning } = await setup()
     const { getSqlite } = await import('../db.js')
     for (let i = 0; i < 6; i++) {
-      const t = createThread({ title: `T${i}`, nextAction: 'N', state: 'active', owner: 'you' })
-      // Space out updatedAt so sorting is deterministic
+      const t = createThread({ title: `T${i}`, nextAction: 'N', state: 'open', owner: 'you' })
       getSqlite().prepare('UPDATE threads SET updated_at = ? WHERE id = ?')
         .run(Date.now() - (6 - i) * 10000, t.id)
     }
     const w = overloadWarning(listThreads())
     expect(w?.suggestions).toHaveLength(3)
-    // First suggestion should be the oldest (T0)
     expect(w?.suggestions[0].title).toBe('T0')
   })
 
-  it('does not count waiting/done threads toward the active threshold', async () => {
+  it('does not count waiting/closed threads toward the active threshold', async () => {
     const { createThread, listThreads, overloadWarning } = await setup()
     for (let i = 0; i < 5; i++) {
-      createThread({ title: `T${i}`, nextAction: 'N', state: 'active', owner: 'you' })
+      createThread({ title: `T${i}`, nextAction: 'N', state: 'open', owner: 'you' })
     }
     createThread({ title: 'W', nextAction: 'N', state: 'waiting', owner: 'you' })
-    createThread({ title: 'D', nextAction: 'N', state: 'done', owner: 'you' })
+    createThread({ title: 'D', nextAction: 'N', state: 'closed', owner: 'you' })
     expect(overloadWarning(listThreads())).toBeNull()
   })
 })
@@ -246,7 +315,7 @@ describe('overloadWarning', () => {
 describe('deleteThread', () => {
   it('removes the thread from the DB', async () => {
     const { createThread, deleteThread, getThread } = await setup()
-    const t = createThread({ title: 'T', nextAction: 'N', state: 'active', owner: 'you' })
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
     deleteThread(t.id)
     expect(getThread(t.id)).toBeUndefined()
   })

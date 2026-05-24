@@ -13,7 +13,7 @@ export function register(program: Command): void {
         process.exitCode = 1
         process.exit()
       }
-      updateState(id, 'done')
+      updateState(id, 'closed')
       const elapsed = Date.now() - thread.createdAt.getTime()
       console.log(`✓ Done. Completed in ${durationStr(elapsed)}`)
 

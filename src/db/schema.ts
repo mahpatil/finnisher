@@ -1,22 +1,28 @@
 import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
 
-export type ThreadState = 'active' | 'waiting' | 'blocked' | 'done'
-export type ThreadOwner = 'you' | 'ai_agent' | 'other'
-export type AgentType = 'claude_code' | 'codex' | 'opencode' | 'gemini_code' | 'manual'
+export type ThreadState    = 'new' | 'open' | 'waiting' | 'blocked' | 'closed' | 'archived'
+export type ThreadPriority = 'now' | 'next' | 'later' | 'out'
+export type ThreadOwner    = 'you' | 'ai_agent' | 'other'
+export type AgentType      = 'claude_code' | 'codex' | 'opencode' | 'gemini_code' | 'manual'
+
+export const THREAD_STATES     = ['new', 'open', 'waiting', 'blocked', 'closed', 'archived'] as const
+export const THREAD_PRIORITIES = ['now', 'next', 'later', 'out'] as const
 
 export const threads = sqliteTable('threads', {
   id:           text('id').primaryKey(),
   title:        text('title').notNull(),
-  state:        text('state').$type<ThreadState>().notNull().default('active'),
+  state:        text('state').$type<ThreadState>().notNull().default('open'),
   nextAction:   text('next_action').notNull(),
   owner:        text('owner').$type<ThreadOwner>().notNull().default('you'),
   notes:        text('notes'),
+  priority:     text('priority').$type<ThreadPriority>().notNull().default('later'),
   momentum:     integer('momentum').notNull().default(0),
   stalled:      integer('stalled', { mode: 'boolean' }).notNull().default(false),
   lastVelocity: real('last_velocity'),
   createdAt:    integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt:    integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
   completedAt:  integer('completed_at', { mode: 'timestamp_ms' }),
+  archivedAt:   integer('archived_at', { mode: 'timestamp_ms' }),
 })
 
 export const sessions = sqliteTable('sessions', {

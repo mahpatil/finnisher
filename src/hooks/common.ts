@@ -173,7 +173,7 @@ export function ensureThreadId(cwd: string = process.cwd()): string | null {
     const thread = createThread({
       title: `${folderName} Development`,
       nextAction: 'Continue development',
-      state: 'active',
+      state: 'open',
       owner: 'you',
     })
 

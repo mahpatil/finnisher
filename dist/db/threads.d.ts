@@ -1,4 +1,4 @@
-import { type Thread, type NewThread, type ThreadState } from './schema.js';
+import { type Thread, type NewThread, type ThreadState, type ThreadPriority } from './schema.js';
 export type WarningLevel = 'caution' | 'urgent';
 export interface FocusWarning {
     level: WarningLevel;
@@ -11,6 +11,9 @@ export declare function getThread(id: string): Thread | undefined;
 export declare function createThread(input: Omit<NewThread, 'id' | 'createdAt' | 'updatedAt'>): Thread;
 export declare function updateNextAction(id: string, nextAction: string): void;
 export declare function updateState(id: string, state: ThreadState): void;
+export declare function updatePriority(id: string, priority: ThreadPriority): void;
+export declare function archiveThread(id: string): void;
+export declare function unarchiveThread(id: string): void;
 export declare function updateMomentum(id: string, momentum: number): void;
 export declare function setStalled(id: string, stalled: boolean): void;
 export declare function findThreadIdByFolderName(folderName: string): string | null;

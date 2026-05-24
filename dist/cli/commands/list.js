@@ -1,7 +1,10 @@
 import Table from 'cli-table3';
 import { listThreads, isStalled, overloadWarning } from '../../db/threads.js';
+import { THREAD_STATES, THREAD_PRIORITIES } from '../../db/schema.js';
 import { stateBadge, stalledBadge, printFocusWarning } from '../ui/format.js';
-const VALID_STATES = ['active', 'waiting', 'blocked', 'done'];
+const STATE_ORDER = {
+    new: 0, open: 1, waiting: 2, blocked: 3, closed: 4, archived: 5,
+};
 function truncate(str, max) {
     return str.length > max ? str.slice(0, max - 1) + '…' : str;
 }
@@ -16,9 +19,8 @@ function relativeDate(date) {
     return 'just now';
 }
 function sortThreads(ts) {
-    const order = { active: 0, waiting: 1, blocked: 2, done: 3 };
     return [...ts].sort((a, b) => {
-        const orderDiff = order[a.state] - order[b.state];
+        const orderDiff = STATE_ORDER[a.state] - STATE_ORDER[b.state];
         if (orderDiff !== 0)
             return orderDiff;
         return a.updatedAt.getTime() - b.updatedAt.getTime();
@@ -29,23 +31,41 @@ export function register(program) {
         .command('list')
         .description('List threads')
         .option('--state <state>', 'Filter by state')
+        .option('--archived', 'Show only archived threads')
+        .option('--priority <priority>', 'Filter by priority')
         .action((opts) => {
         const all = listThreads();
         const stateFilter = opts.state;
-        if (stateFilter && !VALID_STATES.includes(stateFilter)) {
-            console.error(`Error: Invalid state "${stateFilter}". Valid states: ${VALID_STATES.join(', ')}`);
+        if (stateFilter && !THREAD_STATES.includes(stateFilter)) {
+            console.error(`Error: Invalid state "${stateFilter}". Valid states: ${THREAD_STATES.join(', ')}`);
             process.exitCode = 1;
             process.exit();
         }
-        const filtered = stateFilter
-            ? all.filter(t => t.state === stateFilter)
-            : all.filter(t => t.state !== 'done');
+        const priorityFilter = opts.priority;
+        if (priorityFilter && !THREAD_PRIORITIES.includes(priorityFilter)) {
+            console.error(`Error: Invalid priority "${priorityFilter}". Valid: ${THREAD_PRIORITIES.join(', ')}`);
+            process.exitCode = 1;
+            process.exit();
+        }
+        let filtered;
+        if (opts.archived) {
+            filtered = all.filter(t => t.state === 'archived');
+        }
+        else if (stateFilter) {
+            filtered = all.filter(t => t.state === stateFilter);
+        }
+        else {
+            filtered = all.filter(t => t.state !== 'archived');
+        }
+        if (priorityFilter) {
+            filtered = filtered.filter(t => t.priority === priorityFilter);
+        }
         const warning = overloadWarning(all);
         if (warning)
             printFocusWarning(warning);
         const table = new Table({
-            head: ['ID', 'Title', 'State', 'Owner', 'Next Action', 'Updated', '⚠'],
-            colWidths: [12, 37, 10, 10, 42, 12, 14],
+            head: ['ID', 'Title', 'State', 'Priority', 'Owner', 'Next Action', 'Updated', '⚠'],
+            colWidths: [12, 32, 10, 10, 10, 37, 12, 14],
             style: { head: ['cyan'] },
         });
         const sorted = sortThreads(filtered);
@@ -53,10 +73,11 @@ export function register(program) {
             const stalled = isStalled(t);
             table.push([
                 t.id,
-                truncate(t.title, 35),
+                truncate(t.title, 30),
                 stateBadge(t.state),
+                t.priority,
                 t.owner,
-                truncate(t.nextAction, 40),
+                truncate(t.nextAction, 35),
                 relativeDate(t.updatedAt),
                 stalled ? stalledBadge() : '',
             ]);
