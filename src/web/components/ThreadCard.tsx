@@ -235,6 +235,22 @@ export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaitin
           </Box>
         )}
 
+        {showActions && isClosed && (
+          <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+            <Button
+              data-testid="archive-btn"
+              fullWidth
+              size="small"
+              variant="text"
+              startIcon={<ArchiveIcon sx={{ fontSize: '12px !important' }} />}
+              sx={{ color: 'text.secondary', fontSize: '0.625rem' }}
+              onClick={e => { e.stopPropagation(); onArchive?.(thread.id) }}
+            >
+              ARCHIVE
+            </Button>
+          </Box>
+        )}
+
         {showActions && isArchived && (
           <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
             <Button

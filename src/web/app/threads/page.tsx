@@ -177,7 +177,6 @@ export default function ThreadsPage() {
           <Grid key={t.id} size={{ xs: 12, sm: 6, md: 4 }}>
             <ThreadCard
               thread={t}
-              showActions={t.state !== 'closed'}
               onMarkDone={markDone}
               onArchive={archiveThread}
               onUnarchive={unarchiveThread}
