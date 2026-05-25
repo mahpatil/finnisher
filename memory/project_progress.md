@@ -1,5 +1,9 @@
 # Finnisher — Project Progress
 
+## Hotfix — hook parent-repo git remote bleed — ✅ Done (2026-05-25)
+Commits: `59b6ac2` → `c34940d`
+Summary: Fixed `getGithubUrl` walking up to parent git repo when project is nested (e.g. fluicrm inside agent-os); added `--show-toplevel` guard + `realpathSync` for macOS symlink normalisation; 9 new tests covering getGithubUrl, getThreadId, ensureThreadId.
+
 ## Step 7 — finn web background + global install fix — ✅ Done (2026-05-25)
 Commits: `ef23c40`
 Summary: Fixed `finn web` for global npm install (explicit next binary path), fully detached background mode (stdio redirect + child.unref()), added `finn web status` subcommand, added `prepare` build script, rewrote README install/web docs.

@@ -4,6 +4,19 @@
 
 ---
 
+### Hotfix — hook parent-repo git remote bleed (2026-05-25) ✅ APPROVED
+**Commits:** `59b6ac2` → `c34940d`
+
+**Fixed**
+- `src/hooks/common.ts` — `getGithubUrl` now verifies `git rev-parse --show-toplevel` matches `cwd` before reading the remote; prevents projects nested inside another git repo (e.g. `fluicrm` inside `agent-os`) from inheriting the parent's GitHub URL and landing sessions on the wrong thread
+
+**Added**
+- `src/hooks/__tests__/common.test.ts` — 9 new tests: `getGithubUrl` parent walk-up (2), `getThreadId` stale id + folder-name fallback (2), `ensureThreadId` full coverage (3), plus 2 nested-repo positive cases
+
+**Tests:** 250 unit — all green (3 pre-existing Gemini setup failures unrelated)
+
+---
+
 ### Step 7 — finn web background + global install fix (2026-05-25) ✅ APPROVED
 **Commits:** `ef23c40`
 
