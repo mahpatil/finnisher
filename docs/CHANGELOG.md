@@ -88,6 +88,27 @@
 
 ---
 
+### Gemini CLI Hooks + OpenCode fix + finn discover (2026-05-05) ✅ DONE
+**Source:** `docs/changelog-2026-05-05.md` + `docs/changelog-2026-05-28-autodetect.md`
+
+**Added**
+- `src/hooks/gemini.ts` — `handleGeminiStart`/`handleGeminiStop`; tracks sessions with thread linking, tokens, cost, git state
+- `src/db/schema.ts` — `gemini_code` added to `AgentType` union
+- `src/cli/commands/setup.ts` — auto-detects `gemini` on PATH, registers `SessionStart`/`SessionEnd` in `~/.gemini/settings.json`
+- `src/web/components/SessionCard.tsx` — Gemini badge (yellow/warning), human-readable agent labels for all agents
+- `src/cli/commands/discover.ts` — scans `~/agent-os/code-workspaces/` for projects; shows linked/unlinked status; `--create` flag auto-creates threads; `--fix` flag verifies links
+
+**Changed**
+- `src/hooks/opencode.ts` — replaced broken `after` hook with proper plugin (`session.created`/`session.deleted`); added `handleOpencodeStart()`
+- `src/cli/commands/setup.ts` — creates OpenCode plugin at `~/.config/opencode/plugins/finnisher.js`
+- `src/cli/commands/hook.ts` — added `opencode-start` event
+- `src/cli/commands/sessions.ts` — shows human-readable agent names ("Gemini", "Claude", "Codex", "OpenCode")
+- `src/hooks/common.ts` — enhanced `getThreadId()` fallback chain: `.finn-thread` → GitHub URL match → folder name match
+
+**Tests:** 172+ unit (27 new for Gemini/OpenCode/hook dispatch)
+
+---
+
 ### Step 5 — Web Dashboard (2026-05-23) ✅ APPROVED
 **Commits:** see `feat/05-web-dashboard`
 

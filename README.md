@@ -2,7 +2,7 @@
 
 > **Turn everything you start into something you finish.**
 
-**Finnisher** is a personal execution momentum tracker. It logs **Threads** (units of outcome) and **Sessions** (AI agent work sessions across Claude Code, Codex, OpenCode) into a local SQLite database — giving you a dashboard of what's moving, what's stalled, and what each agent session actually cost.
+**Finnisher** is a personal execution momentum tracker. It logs **Threads** (units of outcome) and **Sessions** (AI agent work sessions across Claude Code, Codex, OpenCode, and Gemini CLI) into a local SQLite database — giving you a dashboard of what's moving, what's stalled, and what each agent session actually cost.
 
 ---
 
@@ -13,7 +13,7 @@ npm install -g github:mahpatil/finnisher
 finn setup
 ```
 
-`finn setup` auto-detects your installed agents (Claude Code, Codex, OpenCode) and registers hooks.
+`finn setup` auto-detects your installed agents (Claude Code, Codex, OpenCode, Gemini CLI) and registers hooks.
 
 ---
 
@@ -64,7 +64,7 @@ A **thread** = a unit of outcome. Not a task list — a meaningful goal with a c
 
 ### Auto-detected threads
 
-When you start a Claude Code, Codex, or OpenCode session in a project that has no `.finn-thread` file, Finnisher automatically creates a thread for that project and writes a `.finn-thread` file so all subsequent sessions link to the same thread. The auto-created thread gets a generic title (`<folder> Development`) — update it with:
+When you start a Claude Code, Codex, OpenCode, or Gemini CLI session in a project that has no `.finn-thread` file, Finnisher automatically creates a thread for that project and writes a `.finn-thread` file so all subsequent sessions link to the same thread. The auto-created thread gets a generic title (`<folder> Development`) — update it with:
 
 ```bash
 finn next <id> "actual next action"
@@ -92,7 +92,7 @@ echo "abc123xyz" > .finn-thread
 echo ".finn-thread" >> .gitignore   # personal state, don't share
 ```
 
-All hooks (Claude Code, git, Codex, OpenCode) read this file automatically. If no `.finn-thread` file exists, the hook creates one automatically.
+All hooks (Claude Code, Codex, OpenCode, Gemini, git) read this file automatically. If no `.finn-thread` file exists, the hook creates one automatically.
 
 ---
 
@@ -110,7 +110,11 @@ All hooks (Claude Code, git, Codex, OpenCode) read this file automatically. If n
 | `finn status <id> <state>` | Transition state (`new`/`open`/`waiting`/`blocked`/`closed`/`archived`) |
 | `finn priority <id> <priority>` | Set priority (`now`/`next`/`later`/`out`) |
 | `finn archive <id>` | Archive a thread |
+| `finn unarchive <id>` | Unarchive a thread |
 | `finn sessions` | Show recent agent sessions with token + git stats |
+| `finn discover` | Scan workspace for projects and show thread linkage status |
+| `finn discover --create` | Auto-create threads for unlinked projects |
+| `finn discover --fix` | Verify existing links and suggest corrections |
 | `finn web` | Start the web dashboard in the background |
 | `finn web status` | Check if the dashboard is running |
 | `finn web stop` | Stop the running dashboard |
@@ -150,8 +154,11 @@ Registered automatically by `finn setup`:
 |---|---|---|
 | **Claude Code** | `PostToolUse` + `Stop` | Token counts, USD cost, session duration |
 | **Codex** | `~/.codex/hooks/` | Session start/end |
-| **OpenCode** | `~/.opencode/config.json` | Session end |
+| **OpenCode** | `~/.config/opencode/plugins/finnisher.js` | Session start/end (`session.created`/`session.deleted`) |
+| **Gemini CLI** | `~/.gemini/settings.json` `SessionStart`/`SessionEnd` | Session start/end, tokens, cost, git state |
 | **Git** | `post-commit` (per repo) | Bumps thread `updatedAt` on every commit |
+
+Session cards show human-readable agent labels ("Claude", "Codex", "OpenCode", "Gemini") with colour-coded badges.
 
 ---
 
