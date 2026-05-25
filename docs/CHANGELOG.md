@@ -4,6 +4,26 @@
 
 ---
 
+### Step 8 — Dashboard PATCH Error Handling (2026-05-25) ✅ APPROVED
+**Commits:** `792efa4` → `4d986b5`
+
+**Added**
+- `src/web/lib/api.ts` — shared `patchThread` helper that throws on non-2xx with the server's error message (or generic fallback)
+- `src/web/lib/__tests__/api.test.ts` — 5 unit tests covering 200 success, request shape, 422 error, unparseable body, network failure
+- `e2e/patch-error-handling.spec.ts` — 5 Playwright e2e tests: error Snackbar on 404, auto-dismiss after 4s, manual dismiss, no Snackbar on success, /threads page coverage
+- `package.json` — `dev:network` script (`next dev --hostname 0.0.0.0`) for local-network access during development
+
+**Changed**
+- `src/web/components/Dashboard.tsx` — removed local `patchThread` duplicate; added `errorMsg` state, try/catch on all 5 action handlers, MUI Snackbar at bottom-centre
+- `src/web/app/threads/page.tsx` — same: removed local `patchThread`, added `errorMsg` state + Snackbar
+
+**Tests:** 255 unit + 25 Playwright — all green. (3 pre-existing Gemini setup failures unrelated.)
+
+**Deferred (non-blocking)**
+- None
+
+---
+
 ### Hotfix — hook parent-repo git remote bleed (2026-05-25) ✅ APPROVED
 **Commits:** `59b6ac2` → `c34940d`
 
