@@ -58,9 +58,14 @@ A **thread** = a unit of outcome. Not a task list — a meaningful goal with a c
 | Field | Description |
 |---|---|
 | `title` | What you're trying to finish |
-| `state` | `active` / `waiting` / `blocked` / `done` |
+| `state` | `new` / `open` / `waiting` / `blocked` / `closed` / `archived` |
+| `priority` | `now` / `next` / `later` / `out` — colour-coded sequencing |
 | `nextAction` | The single executable next step (mandatory) |
 | `owner` | `you` / `ai_agent` / `other` |
+
+**States:** `new` and `open` are active; `waiting`/`blocked` are parked; `closed` is done; `archived` is out of sight. Archive any closed thread to keep the list clean.
+
+**Priority:** sequences what to work on next. `now` (red) → `next` (orange) → `later` (blue) → `out` (grey, deprioritised). Change priority via the badge dropdown on any thread card or the Priority selector in the thread detail view.
 
 **Focus rule:** 5 active threads is the ideal. The system warns at 6–8 (yellow) and urges action at 9+ (red) — but never blocks you from adding more.
 
@@ -117,8 +122,10 @@ The relationship is a nullable FK (sessions.thread_id → threads.id), so sessio
 | `finn list` | Show active threads + stalled count |
 | `finn add` | Add a thread (interactive or `--title`/`--next`) |
 | `finn next <id> <action>` | Set next action |
-| `finn done <id>` | Mark thread complete |
-| `finn status <id> <state>` | Transition state |
+| `finn done <id>` | Mark thread closed |
+| `finn status <id> <state>` | Transition state (`new`/`open`/`waiting`/`blocked`/`closed`/`archived`) |
+| `finn priority <id> <priority>` | Set priority (`now`/`next`/`later`/`out`) |
+| `finn archive <id>` | Archive a thread |
 | `finn sessions` | Show recent agent sessions with token + git stats |
 | `finn web` | Open dashboard at localhost:3141 |
 | `finn touch <id>` | Bump activity (used by hooks) |
@@ -129,15 +136,15 @@ The relationship is a nullable FK (sessions.thread_id → threads.id), so sessio
 
 `finn web` starts a local Next.js dashboard at **http://localhost:3141**:
 
-| Tab | Shows |
+| Route | Shows |
 |---|---|
-| **Active** | Current threads — neglected ones float to top. Focus banner at 6+ active. |
-| **Waiting** | Blocked/waiting threads |
-| **Stalled** | Any thread with no activity in 48h+ |
-| **Done** | Last 30 completed threads |
-| **Sessions** | All agent sessions: agent badge, duration, tokens, cost, git state |
+| `/` | Overview — velocity chart, stalled alerts, active threads |
+| `/threads` | All threads with state + priority filters, archive/unarchive actions |
+| `/sessions` | All agent sessions: agent badge, duration, tokens, cost, git state |
+| `/insights` | Execution analytics across sessions |
+| `/optimization` | Agent optimisation (coming soon) |
 
-Dashboard polls every 5 seconds — changes from `finn list` / `finn done` reflect automatically.
+Each route is directly navigable via URL. Dashboard polls every 5 seconds — changes from `finn list` / `finn done` reflect automatically. The focus warning banner appears when active thread count exceeds 5.
 
 ---
 
