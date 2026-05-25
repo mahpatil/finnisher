@@ -136,6 +136,33 @@ All hooks (Claude Code, Codex, OpenCode, Gemini, git) read this file automatical
 
 Each route is directly navigable via URL. Dashboard polls every 5 seconds — changes from `finn list` / `finn done` reflect automatically. The focus warning banner appears when active thread count exceeds 5. If a dashboard action fails (network error, invalid state), a brief error notification appears at the bottom of the screen and auto-dismisses after 4 seconds.
 
+### Responsive layout
+
+The dashboard is usable on mobile (375px+) and desktop:
+
+- **Mobile (< 600px):** the sidebar is hidden by default; a hamburger icon in the AppBar opens it as a full-height overlay. Tap any nav item to navigate and auto-close the drawer.
+- **Desktop (≥ 900px):** the sidebar is permanently visible. A chevron button at the bottom collapses it to icon-only width (~56px) to reclaim screen space; click again to restore full width.
+
+### Priority card highlights
+
+Thread cards are colour-accented by priority so `NOW` and `NEXT` items stand out at a glance:
+
+| Priority | Left border colour |
+|---|---|
+| `now` | Red (`#f44336`) |
+| `next` | Orange (`#ff9800`) |
+| `later` / `out` | None (or stalled border if stalled) |
+
+### Thread todos
+
+Each thread has a lightweight checklist in its detail view:
+
+- Open any thread → scroll to the **Todos** section below the session timeline.
+- Type a todo and press **Enter** (or click **+**) to add it as an unchecked item.
+- Click the checkbox to mark it done (strikethrough) — persists across page reload.
+- Hover a todo to reveal **edit** (pencil) and **delete** (trash) icons.
+- The thread card shows a `done/total ✓` chip when the thread has any todos; the chip turns green when all are complete.
+
 ```bash
 finn web            # start in background, returns to shell immediately
 finn web status     # Running (PID 1234) → http://localhost:3141

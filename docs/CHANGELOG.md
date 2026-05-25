@@ -4,6 +4,34 @@
 
 ---
 
+### Step 9 — Responsive UI, Thread Todos, Priority Card Highlights (2026-05-25) ✅ APPROVED
+**Commits:** `2fb2445` → `a783da0`
+
+**Added**
+- `src/db/schema.ts` — `threadTodos` table + `ThreadTodo`/`NewThreadTodo` types
+- `src/db/migrations/0004_thread_todos.sql` — migration creating `thread_todos` with FK cascade delete
+- `src/db/todos.ts` — `createTodo`, `listTodos`, `updateTodo`, `deleteTodo`, `listTodoCounts` DB functions
+- `src/web/app/api/threads/[id]/todos/route.ts` — `GET` + `POST` handlers for thread todos
+- `src/web/app/api/todos/[id]/route.ts` — `PATCH` + `DELETE` handlers for individual todos
+- `src/web/components/TodoSection.tsx` — SWR-powered checklist component with add/toggle/edit/delete
+- `e2e/09-responsive-todos-priority.spec.ts` — 19 Playwright tests covering all acceptance criteria
+- `src/db/__tests__/todos.test.ts` — 11 unit tests for the DB todo layer
+- `src/web/app/api/__tests__/todos.test.ts` — 13 unit tests for the todo API routes
+- `docs/specs/09-responsive-todos-priority-highlight.md` (archived)
+
+**Changed**
+- `src/web/components/LayoutShell.tsx` — responsive drawer: mobile hamburger + temporary drawer; desktop collapse toggle; removed CSS transition for test determinism
+- `src/web/components/ThreadCard.tsx` — priority left border (red/orange); `done/total ✓` chip (turns green when all complete)
+- `src/web/components/ThreadDetail.tsx` — added `<TodoSection>` + `data-testid="back-button"` on back button
+- `src/web/app/api/threads/route.ts` — thread list now includes `todoDone`/`todoTotal` counts via `listTodoCounts`
+
+**Tests:** 282 unit + 19 Playwright — all green. (3 pre-existing Gemini setup failures unrelated.)
+
+**Deferred (non-blocking)**
+- None
+
+---
+
 ### Step 8 — Dashboard PATCH Error Handling (2026-05-25) ✅ APPROVED
 **Commits:** `792efa4` → `4d986b5`
 

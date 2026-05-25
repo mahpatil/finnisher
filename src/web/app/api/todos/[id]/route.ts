@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { runMigrations } from '@db/migrate'
-import { updateTodo, deleteTodo, listTodos } from '@db/todos'
+import { updateTodo, deleteTodo } from '@db/todos'
 import { getDb } from '@db/db'
 import { threadTodos } from '@db/schema'
 import { eq } from 'drizzle-orm'

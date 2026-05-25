@@ -194,9 +194,16 @@ export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaitin
             {(thread.todoTotal ?? 0) > 0 && (
               <Chip
                 data-testid="todo-count-chip"
-                label={`${thread.todoDone ?? 0}/${thread.todoTotal}`}
+                label={`${thread.todoDone ?? 0}/${thread.todoTotal} ✓`}
                 size="small"
-                sx={{ fontSize: '9px', height: 18 }}
+                sx={{
+                  fontSize: '9px',
+                  height: 18,
+                  ...(thread.todoDone === thread.todoTotal && {
+                    bgcolor: 'success.dark',
+                    color: 'success.contrastText',
+                  }),
+                }}
               />
             )}
           </Box>

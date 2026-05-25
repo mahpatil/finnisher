@@ -109,4 +109,9 @@ describe('listTodoCounts', () => {
     const counts = todos.listTodoCounts([thread.id])
     expect(counts[thread.id]).toEqual({ done: 0, total: 0 })
   })
+
+  it('returns empty object for empty threadIds array', async () => {
+    const { todos } = await setup()
+    expect(todos.listTodoCounts([])).toEqual({})
+  })
 })
