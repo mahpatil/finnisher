@@ -88,6 +88,31 @@ describe('getGithubUrl', () => {
     expect(getGithubUrl(dir)).toBeNull()
     rmSync(dir, { recursive: true })
   })
+
+  it('returns null when cwd is a plain subdirectory of a parent git repo (no own .git)', async () => {
+    // Reproduces: fluicrm inside agent-os — if child has no .git, git walks up
+    // to parent and getGithubUrl must return null rather than the parent URL.
+    const { getGithubUrl } = await import('../common.js')
+    const parent = tempDir()
+    initGitRepo(parent, 'https://github.com/user/parent.git')
+    const child = join(parent, 'nested-project')
+    mkdirSync(child)
+    expect(getGithubUrl(child)).toBeNull()
+    rmSync(parent, { recursive: true })
+  })
+
+  it('returns child repo URL when cwd is a nested git repo with its own .git', async () => {
+    // Child repo inside a parent repo — each has its own .git; should return
+    // child's remote, not parent's.
+    const { getGithubUrl } = await import('../common.js')
+    const parent = tempDir()
+    initGitRepo(parent, 'https://github.com/user/parent.git')
+    const child = join(parent, 'child-project')
+    mkdirSync(child)
+    initGitRepo(child, 'https://github.com/user/child.git')
+    expect(getGithubUrl(child)).toBe('https://github.com/user/child')
+    rmSync(parent, { recursive: true })
+  })
 })
 
 // ── getFolderName ──────────────────────────────────────────────────────────
@@ -156,6 +181,80 @@ describe('getThreadId', () => {
     writeFileSync(join(dir, '.finn-thread'), '   \n')
     expect(getThreadId(dir)).toBeNull()
     rmSync(dir, { recursive: true })
+    rmSync(home, { recursive: true })
+  })
+
+  it('returns null when .finn-thread contains a stale id not in the database', async () => {
+    const home = await setupDb()
+    const { getThreadId } = await import('../common.js')
+    const dir = tempDir()
+    writeFileSync(join(dir, '.finn-thread'), 'staleId000000\n')
+    expect(getThreadId(dir)).toBeNull()
+    rmSync(dir, { recursive: true })
+    rmSync(home, { recursive: true })
+  })
+
+  it('falls back to folder name match via sessions table when no .finn-thread', async () => {
+    const home = await setupDb()
+    const { createThread } = await import('../../db/threads.js')
+    const { createSession } = await import('../../db/sessions.js')
+    const thread = createThread({ title: 'myapp', nextAction: 'A', state: 'open', owner: 'you' })
+    createSession({
+      agent: 'claude_code',
+      startedAt: new Date(),
+      threadId: thread.id,
+      projectPath: '/proj/myapp',
+      folderName: 'myapp',
+    })
+    const { getThreadId } = await import('../common.js')
+    // dir basename must match folderName used in the session
+    const dir = join(tempDir(), 'myapp')
+    mkdirSync(dir)
+    expect(getThreadId(dir)).toBe(thread.id)
+    rmSync(dir, { recursive: true })
+    rmSync(home, { recursive: true })
+  })
+})
+
+// ── ensureThreadId ─────────────────────────────────────────────────────────
+
+describe('ensureThreadId', () => {
+  it('creates a new thread and writes .finn-thread when no thread exists', async () => {
+    const home = await setupDb()
+    const { ensureThreadId } = await import('../common.js')
+    const dir = join(tempDir(), 'brand-new-project')
+    mkdirSync(dir)
+    const threadId = ensureThreadId(dir)
+    expect(threadId).toBeTruthy()
+    const written = readFileSync(join(dir, '.finn-thread'), 'utf8').trim()
+    expect(written).toBe(threadId)
+    rmSync(dir, { recursive: true })
+    rmSync(home, { recursive: true })
+  })
+
+  it('returns existing thread id without creating a duplicate when .finn-thread already exists', async () => {
+    const home = await setupDb()
+    const { createThread } = await import('../../db/threads.js')
+    const { listThreads } = await import('../../db/threads.js')
+    const thread = createThread({ title: 'T', nextAction: 'A', state: 'open', owner: 'you' })
+    const { ensureThreadId } = await import('../common.js')
+    const dir = tempDir()
+    writeFileSync(join(dir, '.finn-thread'), thread.id + '\n')
+    const result = ensureThreadId(dir)
+    expect(result).toBe(thread.id)
+    // Only the one thread we created — no duplicate
+    expect(listThreads().length).toBe(1)
+    rmSync(dir, { recursive: true })
+    rmSync(home, { recursive: true })
+  })
+
+  it('still returns a thread id when .finn-thread write fails due to missing parent dir', async () => {
+    const home = await setupDb()
+    const { ensureThreadId } = await import('../common.js')
+    // Pass a path whose parent doesn't exist — write will fail but thread should still be created
+    const dir = join(tempDir(), 'nonexistent-parent', 'project')
+    const threadId = ensureThreadId(dir)
+    expect(threadId).toBeTruthy()
     rmSync(home, { recursive: true })
   })
 })
