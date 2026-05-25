@@ -14,6 +14,7 @@ import { SessionCard, type SessionData } from '../../components/SessionCard'
 import { ThreadForm } from '../../components/ThreadForm'
 import { LayoutShell } from '../../components/LayoutShell'
 import { ThreadDetail } from '../../components/ThreadDetail'
+import { patchThread } from '../../lib/api'
 
 interface ThreadsResponse {
   threads: ThreadData[]
@@ -26,14 +27,6 @@ interface ThreadsResponse {
 }
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
-
-async function patchThread(id: string, patch: Record<string, unknown>) {
-  await fetch(`/api/threads/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(patch),
-  })
-}
 
 const STATE_FILTERS = ['All', 'new', 'open', 'waiting', 'blocked', 'closed', 'archived'] as const
 const PRIORITY_FILTERS = ['All', 'now', 'next', 'later', 'out'] as const

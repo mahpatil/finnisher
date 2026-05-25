@@ -15,6 +15,7 @@ import { SessionCard, type SessionData } from './SessionCard'
 import { ThreadForm } from './ThreadForm'
 import { LayoutShell } from './LayoutShell'
 import { ThreadDetail } from './ThreadDetail'
+import { patchThread } from '../lib/api'
 
 interface ThreadsResponse {
   threads: ThreadData[]
@@ -27,14 +28,6 @@ interface ThreadsResponse {
 }
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
-
-async function patchThread(id: string, patch: Record<string, unknown>) {
-  await fetch(`/api/threads/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(patch),
-  })
-}
 
 export default function Dashboard() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
