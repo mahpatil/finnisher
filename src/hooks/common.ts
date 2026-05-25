@@ -1,6 +1,6 @@
 import { execSync } from 'child_process'
 import { basename, join } from 'path'
-import { appendFileSync, readFileSync } from 'fs'
+import { appendFileSync, readFileSync, realpathSync } from 'fs'
 import { homedir } from 'os'
 import { listSessions } from '../db/sessions.js'
 import { findThreadIdByFolderName, createThread, getThread } from '../db/threads.js'
@@ -61,6 +61,18 @@ export function normaliseGithubUrl(raw: string): string | null {
 
 export function getGithubUrl(cwd: string): string | null {
   try {
+    // Verify the resolved git root is cwd itself — prevents walking up into a
+    // parent repo (e.g. fluicrm nested inside agent-os) and returning the
+    // wrong remote. Use realpathSync to normalise symlinks (macOS /tmp →
+    // /private/tmp) before comparing.
+    const gitRoot = execSync('git rev-parse --show-toplevel', {
+      cwd,
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim()
+    const realCwd = (() => { try { return realpathSync(cwd) } catch { return cwd } })()
+    if (gitRoot !== realCwd) return null
+
     const raw = execSync('git remote get-url origin', {
       cwd,
       encoding: 'utf8',
