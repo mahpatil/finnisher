@@ -45,4 +45,13 @@ export const blockers = sqliteTable('blockers', {
     status: text('status').$type().notNull().default('critical'),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
+export const threadTodos = sqliteTable('thread_todos', {
+    id: text('id').primaryKey(),
+    threadId: text('thread_id').notNull().references(() => threads.id, { onDelete: 'cascade' }),
+    text: text('text').notNull(),
+    done: integer('done', { mode: 'boolean' }).notNull().default(false),
+    position: integer('position').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
+});
 //# sourceMappingURL=schema.js.map
