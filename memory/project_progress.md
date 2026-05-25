@@ -1,5 +1,9 @@
 # Finnisher — Project Progress
 
+## Step 7 — finn web background + global install fix — ✅ Done (2026-05-25)
+Commits: `ef23c40`
+Summary: Fixed `finn web` for global npm install (explicit next binary path), fully detached background mode (stdio redirect + child.unref()), added `finn web status` subcommand, added `prepare` build script, rewrote README install/web docs.
+
 ## Step 6 — Thread Lifecycle & Priority — ✅ Done (2026-05-24)
 Commits: `7e2d635` → `e7d62ec` (merge `863dfc5`)
 Summary: Added thread states (new/open/waiting/blocked/closed/archived), priority field (now/next/later/out), archive/unarchive commands, priority editing UI (badge dropdown + Select in detail), URL-based dashboard routing, 25 API unit tests, 15 Playwright e2e tests, FK migration fix.
@@ -25,4 +29,4 @@ Commits: `feat/01-core-db`
 Summary: Drizzle ORM + better-sqlite3 schema, CRUD functions, WAL mode.
 
 ## Next Up
-Step 7 — Global install fix for `finn web` + dashboard PATCH error handling (tracked in openspec/changes/)
+Step 8 — Dashboard PATCH error handling (silent errors swallowed, UI recovers on next 5s poll)

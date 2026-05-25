@@ -8,20 +8,12 @@
 
 ## Install
 
-### One-liner (macOS / Linux, requires Node ≥ 18)
-```bash
-curl -fsSL https://raw.githubusercontent.com/mahpatil/finnisher/main/install.sh | sh
-```
-
-### npm (direct from GitHub, no registry needed)
 ```bash
 npm install -g github:mahpatil/finnisher
 finn setup
 ```
 
 `finn setup` auto-detects your installed agents (Claude Code, Codex, OpenCode) and registers hooks.
-
-> **Note:** `finn web` currently requires running from the repo checkout (`npm run dev`). Global install support for the web dashboard is coming.
 
 ---
 
@@ -40,12 +32,13 @@ finn next abc123xyz "Write the intro paragraph"
 # Mark it done
 finn done abc123xyz
 
-# Open the dashboard (from repo checkout)
-npm run dev   # → http://localhost:3141
-
-# Or after install (work in progress for global install)
-finn web
+# Start the web dashboard in the background
+finn web                    # → starts at http://localhost:3141
+finn web status             # → check if it's running
+finn web stop               # → stop it
 ```
+
+The dashboard runs as a background process — your terminal returns immediately. Logs go to `~/.finnisher/web.log`.
 
 ---
 
@@ -69,6 +62,14 @@ A **thread** = a unit of outcome. Not a task list — a meaningful goal with a c
 
 **Focus rule:** 5 active threads is the ideal. The system warns at 6–8 (yellow) and urges action at 9+ (red) — but never blocks you from adding more.
 
+### Auto-detected threads
+
+When you start a Claude Code, Codex, or OpenCode session in a project that has no `.finn-thread` file, Finnisher automatically creates a thread for that project and writes a `.finn-thread` file so all subsequent sessions link to the same thread. The auto-created thread gets a generic title (`<folder> Development`) — update it with:
+
+```bash
+finn next <id> "actual next action"
+```
+
 ### Sessions
 
 Every AI agent session is logged automatically:
@@ -84,33 +85,14 @@ Every AI agent session is logged automatically:
 
 ### `.finn-thread` convention
 
-Drop a file in any project root to link it to a thread:
+Drop a file in any project root to link it to a specific thread:
 
 ```bash
 echo "abc123xyz" > .finn-thread
 echo ".finn-thread" >> .gitignore   # personal state, don't share
 ```
 
-All hooks (Claude Code, git, Codex, OpenCode) read this file automatically.
-
----
-### Example
-Linking Sessions to Threads
-Sessions are automatically linked to threads via the .finn-thread file convention:
-1. Create a thread and get its ID:
-      ```finn add "Build auth system" --next "Implement OAuth flow"```
-   
-2. Link your project to that thread:
-      echo "abc123xyz" > /path/to/project/.finn-thread
-      (Add .finn-thread to .gitignore — it's personal state.)
-3. Work normally. When you start a Claude/Codex/OpenCode session in that project:
-   - The hook reads .finn-thread via getThreadId() (src/hooks/common.ts:77-84)
-   - Creates a session with threadId set to that value
-   - On stop, closes the session with tokens, cost, and git state
-   - Every git commit also bumps the thread's updatedAt via the post-commit hook
-Manual querying:
-finn sessions --thread <id>    # Show sessions for a specific thread
-The relationship is a nullable FK (sessions.thread_id → threads.id), so sessions can exist unlinked if no .finn-thread file is present.
+All hooks (Claude Code, git, Codex, OpenCode) read this file automatically. If no `.finn-thread` file exists, the hook creates one automatically.
 
 ---
 
@@ -120,6 +102,8 @@ The relationship is a nullable FK (sessions.thread_id → threads.id), so sessio
 |---|---|
 | `finn setup` | One-time setup, register agent hooks |
 | `finn list` | Show active threads + stalled count |
+| `finn list --archived` | Show archived threads |
+| `finn list --state waiting` | Filter by state |
 | `finn add` | Add a thread (interactive or `--title`/`--next`) |
 | `finn next <id> <action>` | Set next action |
 | `finn done <id>` | Mark thread closed |
@@ -127,14 +111,16 @@ The relationship is a nullable FK (sessions.thread_id → threads.id), so sessio
 | `finn priority <id> <priority>` | Set priority (`now`/`next`/`later`/`out`) |
 | `finn archive <id>` | Archive a thread |
 | `finn sessions` | Show recent agent sessions with token + git stats |
-| `finn web` | Open dashboard at localhost:3141 |
+| `finn web` | Start the web dashboard in the background |
+| `finn web status` | Check if the dashboard is running |
+| `finn web stop` | Stop the running dashboard |
 | `finn touch <id>` | Bump activity (used by hooks) |
 
 ---
 
 ## Dashboard
 
-`finn web` starts a local Next.js dashboard at **http://localhost:3141**:
+`finn web` starts a local Next.js dashboard at **http://localhost:3141** in the background:
 
 | Route | Shows |
 |---|---|
@@ -145,6 +131,14 @@ The relationship is a nullable FK (sessions.thread_id → threads.id), so sessio
 | `/optimization` | Agent optimisation (coming soon) |
 
 Each route is directly navigable via URL. Dashboard polls every 5 seconds — changes from `finn list` / `finn done` reflect automatically. The focus warning banner appears when active thread count exceeds 5.
+
+```bash
+finn web            # start in background, returns to shell immediately
+finn web status     # Running (PID 1234) → http://localhost:3141
+finn web stop       # stop the server
+```
+
+Logs: `~/.finnisher/web.log`
 
 ---
 
@@ -167,23 +161,17 @@ Registered automatically by `finn setup`:
 git clone https://github.com/mahpatil/finnisher
 cd finnisher
 npm install
-npm run dev         # Next.js dashboard at http://localhost:3141
-npm test            # 145 unit tests
-npm run test:e2e    # 18 Playwright e2e tests
-npm run build       # TypeScript compile check
+npm run dev         # Next.js dashboard at http://localhost:3141 (dev mode)
+npm test            # unit tests
+npm run test:e2e    # Playwright e2e tests
+npm run build       # TypeScript compile
 ```
 
 ### Data location
 
 - DB: `~/.finnisher/db.sqlite`
 - Hook log: `~/.finnisher/hook.log`
-
----
-
-## Known Issues
-
-- `finn web` after `npm install -g` doesn't find the Next.js app directory. Use `npm run dev` from the repo for now. Fix tracked in `openspec/changes/finn-web-global-path-fix`.
-- Dashboard PATCH errors are silently swallowed — UI recovers on next 5s poll. Fix tracked in `openspec/changes/dashboard-patch-error-handling`.
+- Web log: `~/.finnisher/web.log`
 
 ---
 

@@ -4,6 +4,24 @@
 
 ---
 
+### Step 7 — finn web background + global install fix (2026-05-25) ✅ APPROVED
+**Commits:** `ef23c40`
+
+**Fixed**
+- `src/cli/commands/web.ts` — use explicit `node_modules/.bin/next` path instead of `npx next`; fixes `finn web` after `npm install -g github:mahpatil/finnisher` (next binary not found from `src/web` subdirectory)
+- `src/cli/commands/web.ts` — fully detach background process: `stdio: ['ignore', logFd, logFd]` + `child.unref()`; terminal returns immediately, no dangling stdio
+
+**Added**
+- `src/cli/commands/web.ts` — `finn web status` subcommand (PID + log path)
+- `src/cli/commands/web.ts` — duplicate-start guard (`isRunning()` with signal-0 probe)
+- `src/cli/commands/web.ts` — port-based fallback kill in `finn web stop`
+- `package.json` — `prepare` script so `dist/` is rebuilt on `npm install -g github:...`
+- `README.md` — rewrote Install, Quick Start, Dashboard, and CLI Reference sections; removed stale "requires repo checkout" note; added `finn web status`/`finn web stop` docs; added auto-thread-detection explanation
+
+**Web log:** `~/.finnisher/web.log`
+
+---
+
 ### Step 6 — Thread Lifecycle & Priority (2026-05-24) ✅ APPROVED
 **Commits:** `7e2d635` → `e7d62ec` (merged `863dfc5`)
 
