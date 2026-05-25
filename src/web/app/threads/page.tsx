@@ -8,6 +8,8 @@ import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import Grid from '@mui/material/Grid'
 import Chip from '@mui/material/Chip'
+import Snackbar from '@mui/material/Snackbar'
+import Alert from '@mui/material/Alert'
 import { ThreadCard, type ThreadData } from '../../components/ThreadCard'
 import { FocusWarningBanner } from '../../components/FocusWarningBanner'
 import { SessionCard, type SessionData } from '../../components/SessionCard'
@@ -37,6 +39,7 @@ export default function ThreadsPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [stateFilter, setStateFilter] = useState<string>('All')
   const [priorityFilter, setPriorityFilter] = useState<string>('All')
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const { data: tRes, mutate: mutateThreads } = useSWR<ThreadsResponse>(
     '/api/threads',
@@ -78,24 +81,24 @@ export default function ThreadsPage() {
     if (archivedKey) await mutateArchived()
   }
 
+  function handleError(err: unknown) {
+    setErrorMsg(err instanceof Error ? err.message : 'Network error — please try again')
+  }
+
   async function markDone(id: string) {
-    await patchThread(id, { state: 'closed' })
-    await mutateAll()
+    try { await patchThread(id, { state: 'closed' }); await mutateAll() } catch (err) { handleError(err) }
   }
 
   async function archiveThread(id: string) {
-    await patchThread(id, { state: 'archived' })
-    await mutateAll()
+    try { await patchThread(id, { state: 'archived' }); await mutateAll() } catch (err) { handleError(err) }
   }
 
   async function unarchiveThread(id: string) {
-    await patchThread(id, { state: 'open' })
-    await mutateAll()
+    try { await patchThread(id, { state: 'open' }); await mutateAll() } catch (err) { handleError(err) }
   }
 
   async function updatePriority(id: string, priority: string) {
-    await patchThread(id, { priority })
-    await mutateAll()
+    try { await patchThread(id, { priority }); await mutateAll() } catch (err) { handleError(err) }
   }
 
   if (selectedThreadId && selectedThread) {
@@ -198,6 +201,16 @@ export default function ThreadsPage() {
         onClose={() => setAddOpen(false)}
         onCreated={() => void mutateAll()}
       />
+
+      <Snackbar
+        data-testid="error-snackbar"
+        open={Boolean(errorMsg)}
+        autoHideDuration={4000}
+        onClose={() => setErrorMsg(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" onClose={() => setErrorMsg(null)}>{errorMsg}</Alert>
+      </Snackbar>
     </LayoutShell>
   )
 }
