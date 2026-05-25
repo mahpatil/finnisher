@@ -130,7 +130,7 @@ All hooks (Claude Code, git, Codex, OpenCode) read this file automatically. If n
 | `/insights` | Execution analytics across sessions |
 | `/optimization` | Agent optimisation (coming soon) |
 
-Each route is directly navigable via URL. Dashboard polls every 5 seconds — changes from `finn list` / `finn done` reflect automatically. The focus warning banner appears when active thread count exceeds 5.
+Each route is directly navigable via URL. Dashboard polls every 5 seconds — changes from `finn list` / `finn done` reflect automatically. The focus warning banner appears when active thread count exceeds 5. If a dashboard action fails (network error, invalid state), a brief error notification appears at the bottom of the screen and auto-dismisses after 4 seconds.
 
 ```bash
 finn web            # start in background, returns to shell immediately
@@ -161,7 +161,8 @@ Registered automatically by `finn setup`:
 git clone https://github.com/mahpatil/finnisher
 cd finnisher
 npm install
-npm run dev         # Next.js dashboard at http://localhost:3141 (dev mode)
+npm run dev         # Next.js dashboard at http://localhost:3141 (dev mode, localhost only)
+npm run dev:network # dev mode accessible on your local network (binds 0.0.0.0:3141)
 npm test            # unit tests
 npm run test:e2e    # Playwright e2e tests
 npm run build       # TypeScript compile

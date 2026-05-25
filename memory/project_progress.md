@@ -1,5 +1,9 @@
 # Finnisher — Project Progress
 
+## Step 8 — Dashboard PATCH Error Handling — ✅ Done (2026-05-25)
+Commits: `792efa4` → `4d986b5`
+Summary: Extracted shared `patchThread` helper to `src/web/lib/api.ts` (throws on non-2xx); added `errorMsg` state + MUI Snackbar to Dashboard and Threads pages; 5 unit tests + 5 Playwright e2e tests; `dev:network` script for LAN access.
+
 ## Hotfix — hook parent-repo git remote bleed — ✅ Done (2026-05-25)
 Commits: `59b6ac2` → `c34940d`
 Summary: Fixed `getGithubUrl` walking up to parent git repo when project is nested (e.g. fluicrm inside agent-os); added `--show-toplevel` guard + `realpathSync` for macOS symlink normalisation; 9 new tests covering getGithubUrl, getThreadId, ensureThreadId.
@@ -33,4 +37,4 @@ Commits: `feat/01-core-db`
 Summary: Drizzle ORM + better-sqlite3 schema, CRUD functions, WAL mode.
 
 ## Next Up
-Step 8 — Dashboard PATCH error handling (silent errors swallowed, UI recovers on next 5s poll)
+Step 9 — TBD (define in next /spec)

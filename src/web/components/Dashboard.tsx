@@ -9,12 +9,15 @@ import AddIcon from '@mui/icons-material/Add'
 import InfoIcon from '@mui/icons-material/Info'
 import { alpha } from '@mui/material/styles'
 import Grid from '@mui/material/Grid'
+import Snackbar from '@mui/material/Snackbar'
+import Alert from '@mui/material/Alert'
 import { ThreadCard, type ThreadData } from './ThreadCard'
 import { FocusWarningBanner } from './FocusWarningBanner'
 import { SessionCard, type SessionData } from './SessionCard'
 import { ThreadForm } from './ThreadForm'
 import { LayoutShell } from './LayoutShell'
 import { ThreadDetail } from './ThreadDetail'
+import { patchThread } from '../lib/api'
 
 interface ThreadsResponse {
   threads: ThreadData[]
@@ -28,17 +31,10 @@ interface ThreadsResponse {
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
-async function patchThread(id: string, patch: Record<string, unknown>) {
-  await fetch(`/api/threads/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(patch),
-  })
-}
-
 export default function Dashboard() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const { data: tRes, mutate: mutateThreads } = useSWR<ThreadsResponse>(
     '/api/threads',
@@ -66,29 +62,28 @@ export default function Dashboard() {
     await mutateThreads()
   }
 
+  function handleError(err: unknown) {
+    setErrorMsg(err instanceof Error ? err.message : 'Network error — please try again')
+  }
+
   async function markDone(id: string) {
-    await patchThread(id, { state: 'closed' })
-    await mutateAll()
+    try { await patchThread(id, { state: 'closed' }); await mutateAll() } catch (err) { handleError(err) }
   }
 
   async function setWaiting(id: string) {
-    await patchThread(id, { state: 'waiting' })
-    await mutateAll()
+    try { await patchThread(id, { state: 'waiting' }); await mutateAll() } catch (err) { handleError(err) }
   }
 
   async function archiveThread(id: string) {
-    await patchThread(id, { state: 'archived' })
-    await mutateAll()
+    try { await patchThread(id, { state: 'archived' }); await mutateAll() } catch (err) { handleError(err) }
   }
 
   async function updateNextAction(id: string, nextAction: string) {
-    await patchThread(id, { nextAction })
-    await mutateAll()
+    try { await patchThread(id, { nextAction }); await mutateAll() } catch (err) { handleError(err) }
   }
 
   async function updatePriority(id: string, priority: string) {
-    await patchThread(id, { priority })
-    await mutateAll()
+    try { await patchThread(id, { priority }); await mutateAll() } catch (err) { handleError(err) }
   }
 
   if (selectedThreadId && selectedThread) {
@@ -229,6 +224,16 @@ export default function Dashboard() {
         onClose={() => setAddOpen(false)}
         onCreated={() => void mutateAll()}
       />
+
+      <Snackbar
+        data-testid="error-snackbar"
+        open={Boolean(errorMsg)}
+        autoHideDuration={4000}
+        onClose={() => setErrorMsg(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" onClose={() => setErrorMsg(null)}>{errorMsg}</Alert>
+      </Snackbar>
     </LayoutShell>
   )
 }
