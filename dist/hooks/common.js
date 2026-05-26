@@ -164,8 +164,22 @@ export function findThreadIdByGithubUrl(githubUrl) {
 }
 export function ensureThreadId(cwd = process.cwd()) {
     const existing = getThreadId(cwd);
-    if (existing)
+    if (existing) {
+        // Heal stale .finn-thread: if the file points to a different (deleted) thread,
+        // overwrite it with the resolved ID so future lookups skip the fallback path.
+        try {
+            const threadIdFile = join(cwd, '.finn-thread');
+            const stored = readFileSync(threadIdFile, 'utf8').trim();
+            if (stored !== existing) {
+                writeFileSync(threadIdFile, existing + '\n', { encoding: 'utf8' });
+                appendHookLog(`ensureThreadId: healed stale .finn-thread ${stored} → ${existing}`);
+            }
+        }
+        catch {
+            // File absent or unwritable — silently skip
+        }
         return existing;
+    }
     try {
         const folderName = getFolderName(cwd) || 'Unknown Project';
         const thread = createThread({
