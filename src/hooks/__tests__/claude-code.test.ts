@@ -47,6 +47,62 @@ describe('handleClaudeStart', () => {
     const s = listSessions()[0]!
     expect(s.projectPath).toBe('/fake/project/path')
   })
+
+  it('deduplicates same-day sessions without creating a duplicate', async () => {
+    const { handleClaudeStart, listSessions } = await setup()
+    handleClaudeStart({}, '/test/project')
+    handleClaudeStart({}, '/test/project')
+    expect(listSessions()).toHaveLength(1)
+  })
+
+  it('auto-closes a stale open session and creates a fresh one', async () => {
+    const { handleClaudeStart, createSession, listSessions } = await setup()
+    // Create a stale session (25 hours ago)
+    createSession({
+      agent: 'claude_code',
+      startedAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+      projectPath: '/test/stale',
+      folderName: 'stale',
+      threadId: null,
+      githubUrl: null,
+    })
+    handleClaudeStart({}, '/test/stale')
+    const all = listSessions()
+    expect(all).toHaveLength(2)
+    const stale = all.find(s => s.startedAt.getTime() < Date.now() - 20 * 60 * 60 * 1000)!
+    expect(stale.endedAt).not.toBeNull()
+    const fresh = all.find(s => s.endedAt === null)!
+    expect(fresh).toBeDefined()
+    expect(fresh.projectPath).toBe('/test/stale')
+  })
+
+  it('backfills thread_id for same-projectPath sessions that had null threadId', async () => {
+    const dbPath = tempDbPath()
+    process.env['FINNISHER_DB_PATH'] = dbPath
+    vi.resetModules()
+    const { runMigrations } = await import('../../db/migrate.js')
+    runMigrations()
+    const sessions = await import('../../db/sessions.js')
+    const threads = await import('../../db/threads.js')
+
+    const t = threads.createThread({ title: 'Proj', nextAction: 'A', state: 'open', owner: 'you' })
+    const orphan = sessions.createSession({
+      agent: 'claude_code',
+      startedAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+      projectPath: '/test/proj',
+      folderName: 'proj',
+      threadId: null,
+      githubUrl: null,
+    })
+    // Close orphan so dedup won't return early
+    sessions.closeSession(orphan.id, { endedAt: new Date() })
+
+    // Backfill directly
+    sessions.backfillNullThreadSessions('/test/proj', t.id)
+
+    const updated = sessions.listSessions().find(s => s.id === orphan.id)!
+    expect(updated.threadId).toBe(t.id)
+  })
 })
 
 describe('handleClaudeStop', () => {

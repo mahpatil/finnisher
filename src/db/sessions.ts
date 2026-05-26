@@ -38,3 +38,11 @@ export function listSessions(opts?: {
 export function getOpenSessions(): Session[] {
   return getDb().select().from(sessions).where(isNull(sessions.endedAt)).all()
 }
+
+export function backfillNullThreadSessions(projectPath: string, threadId: string): void {
+  getDb()
+    .update(sessions)
+    .set({ threadId })
+    .where(and(eq(sessions.projectPath, projectPath), isNull(sessions.threadId)))
+    .run()
+}

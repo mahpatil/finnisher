@@ -28,4 +28,11 @@ export function listSessions(opts) {
 export function getOpenSessions() {
     return getDb().select().from(sessions).where(isNull(sessions.endedAt)).all();
 }
+export function backfillNullThreadSessions(projectPath, threadId) {
+    getDb()
+        .update(sessions)
+        .set({ threadId })
+        .where(and(eq(sessions.projectPath, projectPath), isNull(sessions.threadId)))
+        .run();
+}
 //# sourceMappingURL=sessions.js.map

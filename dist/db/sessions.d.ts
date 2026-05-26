@@ -8,4 +8,5 @@ export declare function listSessions(opts?: {
     limit?: number;
 }): Session[];
 export declare function getOpenSessions(): Session[];
+export declare function backfillNullThreadSessions(projectPath: string, threadId: string): void;
 //# sourceMappingURL=sessions.d.ts.map
