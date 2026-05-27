@@ -65,11 +65,23 @@ export const threadTodos = sqliteTable('thread_todos', {
   completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
 })
 
-export type Thread      = typeof threads.$inferSelect
-export type NewThread   = typeof threads.$inferInsert
-export type Session     = typeof sessions.$inferSelect
-export type NewSession  = typeof sessions.$inferInsert
-export type Blocker     = typeof blockers.$inferSelect
-export type NewBlocker  = typeof blockers.$inferInsert
-export type ThreadTodo  = typeof threadTodos.$inferSelect
-export type NewThreadTodo = typeof threadTodos.$inferInsert
+export const launchCriteria = sqliteTable('launch_criteria', {
+  id:        text('id').primaryKey(),
+  threadId:  text('thread_id').notNull().references(() => threads.id, { onDelete: 'cascade' }),
+  text:      text('text').notNull(),
+  checked:   integer('checked', { mode: 'boolean' }).notNull().default(false),
+  position:  integer('position').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  checkedAt: integer('checked_at', { mode: 'timestamp_ms' }),
+})
+
+export type Thread           = typeof threads.$inferSelect
+export type NewThread        = typeof threads.$inferInsert
+export type Session          = typeof sessions.$inferSelect
+export type NewSession       = typeof sessions.$inferInsert
+export type Blocker          = typeof blockers.$inferSelect
+export type NewBlocker       = typeof blockers.$inferInsert
+export type ThreadTodo       = typeof threadTodos.$inferSelect
+export type NewThreadTodo    = typeof threadTodos.$inferInsert
+export type LaunchCriterion  = typeof launchCriteria.$inferSelect
+export type NewLaunchCriterion = typeof launchCriteria.$inferInsert
