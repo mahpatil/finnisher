@@ -561,6 +561,28 @@ describe('finn list --priority', () => {
   })
 })
 
+// ── finn list — [~DONE] sprint candidate badge ─────────────────────────────
+
+describe('finn list — [~DONE] sprint badge', () => {
+  it('shows [~DONE] badge when completionPct >= 0.75 and not fully launch-ready', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'Sprint Candidate', nextAction: 'Ship', state: 'open', owner: 'you' })
+    // Set up: todo done (0.4) + sessions (0.2) + no open blockers (0.2) = 0.8, no criteria (not launchReady)
+    const { getSqlite } = await import('../../db/db.js')
+    const { createTodo } = await import('../../db/todos.js')
+    const todo = createTodo(t.id, 'Task')
+    getSqlite().prepare('UPDATE thread_todos SET done=1 WHERE id=?').run(todo.id)
+    const { createSession } = await import('../../db/sessions.js')
+    for (let i = 0; i < 3; i++) {
+      createSession({ agent: 'claude_code', startedAt: new Date(), threadId: t.id, projectPath: '/tmp' })
+    }
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'list'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('[~DONE]')
+  })
+})
+
 // ── finn list — launch gate badge ──────────────────────────────────────────
 
 describe('finn list — [READY] badge', () => {
