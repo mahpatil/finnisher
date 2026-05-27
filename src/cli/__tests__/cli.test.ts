@@ -26,6 +26,7 @@ async function setupProgram() {
   const { register: registerWeb } = await import('../commands/web.js')
   const { register: registerArchive } = await import('../commands/archive.js')
   const { register: registerPriority } = await import('../commands/priority.js')
+  const { register: registerLaunch } = await import('../commands/launch.js')
 
   const program = new Command()
     .name('finn')
@@ -42,11 +43,13 @@ async function setupProgram() {
   registerWeb(program)
   registerArchive(program)
   registerPriority(program)
+  registerLaunch(program)
 
   const db = await import('../../db/threads.js')
   const sessionDb = await import('../../db/sessions.js')
+  const lcDb = await import('../../db/launchCriteria.js')
 
-  return { program, db, sessionDb, dbPath }
+  return { program, db, sessionDb, lcDb, dbPath }
 }
 
 afterEach(async () => {
@@ -555,5 +558,60 @@ describe('finn list --priority', () => {
     } catch { /* expected */ }
     expect(process.exitCode).toBe(1)
     exitSpy.mockRestore()
+  })
+})
+
+// ── finn list — launch gate badge ──────────────────────────────────────────
+
+describe('finn list — [READY] badge', () => {
+  it('shows [READY] badge when all launch criteria are checked', async () => {
+    const { program, db, lcDb } = await setupProgram()
+    const t = db.createThread({ title: 'Ready Project', nextAction: 'Ship', state: 'open', owner: 'you' })
+    const c1 = lcDb.addLaunchCriterion(t.id, 'Deployed to prod')
+    const c2 = lcDb.addLaunchCriterion(t.id, 'Announced publicly')
+    lcDb.toggleLaunchCriterion(c1.id, true)
+    lcDb.toggleLaunchCriterion(c2.id, true)
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'list'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('[READY]')
+  })
+
+  it('does not show [READY] badge when criteria are partially checked', async () => {
+    const { program, db, lcDb } = await setupProgram()
+    const t = db.createThread({ title: 'Partial Project', nextAction: 'Work', state: 'open', owner: 'you' })
+    const c = lcDb.addLaunchCriterion(t.id, 'Deployed to prod')
+    lcDb.addLaunchCriterion(t.id, 'Announced')
+    lcDb.toggleLaunchCriterion(c.id, true)
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'list'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).not.toContain('[READY]')
+  })
+})
+
+// ── finn done — launch gate warning ────────────────────────────────────────
+
+describe('finn done — launch gate warning', () => {
+  it('warns when criteria exist but are not all checked', async () => {
+    const { program, db, lcDb } = await setupProgram()
+    const t = db.createThread({ title: 'Unfinished', nextAction: 'Ship', state: 'open', owner: 'you' })
+    lcDb.addLaunchCriterion(t.id, 'Deployed to prod')
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'done', t.id])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Launch gate incomplete')
+    expect(db.getThread(t.id)?.state).toBe('closed')
+  })
+
+  it('does not warn when all criteria are checked', async () => {
+    const { program, db, lcDb } = await setupProgram()
+    const t = db.createThread({ title: 'Finished', nextAction: 'Ship', state: 'open', owner: 'you' })
+    const c = lcDb.addLaunchCriterion(t.id, 'Deployed to prod')
+    lcDb.toggleLaunchCriterion(c.id, true)
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'done', t.id])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).not.toContain('Launch gate incomplete')
   })
 })
