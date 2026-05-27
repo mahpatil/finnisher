@@ -14,6 +14,7 @@ export interface SessionData {
   id: string
   agent: string
   agentId: string | null
+  threadId: string | null
   startedAt: string
   endedAt: string | null
   tokensIn: number | null

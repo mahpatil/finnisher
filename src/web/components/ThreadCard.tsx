@@ -29,6 +29,8 @@ export interface ThreadData {
   updatedAt: string
   completedAt: string | null
   archivedAt: string | null
+  completionPct?: number
+  launchReady?: boolean
   lastVelocity?: number
   todoDone?: number
   todoTotal?: number

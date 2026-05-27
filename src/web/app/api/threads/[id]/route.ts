@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { runMigrations } from '@db/migrate'
 import { getThread, updateState, updateNextAction, updatePriority, archiveThread, unarchiveThread, deleteThread, isStalled } from '@db/threads'
+import { listTodoCounts } from '@db/todos'
+import { computeCompletionPct } from '@db/completionPct'
+import { isLaunchReady } from '@db/launchCriteria'
 import { THREAD_STATES, THREAD_PRIORITIES } from '@db/schema'
 import type { ThreadState, ThreadPriority } from '@db/schema'
 import type { ThreadWithMeta } from '../route.js'
@@ -9,6 +12,8 @@ runMigrations()
 
 function serialize(thread: ReturnType<typeof getThread>): ThreadWithMeta {
   if (!thread) throw new Error('Thread not found')
+  const counts = listTodoCounts([thread.id])
+  const c = counts[thread.id] ?? { done: 0, total: 0 }
   return {
     id: thread.id,
     title: thread.title,
@@ -23,6 +28,10 @@ function serialize(thread: ReturnType<typeof getThread>): ThreadWithMeta {
     archivedAt: thread.archivedAt?.toISOString() ?? null,
     stalled: isStalled(thread),
     momentum: thread.momentum,
+    todoDone: c.done,
+    todoTotal: c.total,
+    completionPct: computeCompletionPct(thread.id),
+    launchReady: isLaunchReady(thread.id),
   }
 }
 

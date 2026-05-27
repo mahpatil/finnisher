@@ -25,8 +25,9 @@ export async function POST(request: Request) {
   const state = ((data['state'] as string) ?? 'open') as ThreadState
   const archivedAt = state === 'archived' ? now : null
 
+  const id = nanoid(10)
   getDb().insert(threads).values({
-    id: nanoid(10),
+    id,
     title: (data['title'] as string) ?? 'Test Thread',
     state,
     priority: ((data['priority'] as string) ?? 'later') as ThreadPriority,
@@ -39,5 +40,5 @@ export async function POST(request: Request) {
     archivedAt,
   }).run()
 
-  return NextResponse.json({ created: true })
+  return NextResponse.json({ id, created: true })
 }

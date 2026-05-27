@@ -4,6 +4,7 @@ import { useState } from 'react'
 import useSWR from 'swr'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import InfoIcon from '@mui/icons-material/Info'
@@ -57,6 +58,7 @@ export default function Dashboard() {
   const activeThreads = [...allThreads.filter(t => t.state === 'new' || t.state === 'open')]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   const stalledThreads = allThreads.filter(t => t.stalled && t.state !== 'closed' && t.state !== 'archived')
+  const sprintCandidates = allThreads.filter(t => (t.completionPct ?? 0) >= 0.75 && t.state !== 'closed' && t.state !== 'archived')
 
   async function mutateAll() {
     await mutateThreads()
@@ -165,6 +167,65 @@ export default function Dashboard() {
             </Box>
           </Box>
         </Grid>
+
+        {/* Sprint Candidates */}
+        {sprintCandidates.length > 0 && (
+          <Grid size={{ xs: 12 }}>
+            <Box
+              data-testid="sprint-candidates-section"
+              sx={{
+                mt: 1,
+                mb: 1,
+                p: 2,
+                bgcolor: alpha('#ffb300', 0.06),
+                border: '1px solid',
+                borderColor: alpha('#ffb300', 0.3),
+                borderRadius: 2,
+              }}
+            >
+              <Typography variant="overline" sx={{ color: '#ffb300', fontWeight: 700, display: 'block', mb: 1.5 }}>
+                Sprint Candidates — Almost Done
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {sprintCandidates.map(t => (
+                  <Box
+                    key={t.id}
+                    onClick={() => setSelectedThreadId(t.id)}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 1.5,
+                      py: 0.75,
+                      bgcolor: alpha('#ffb300', 0.1),
+                      border: '1px solid',
+                      borderColor: alpha('#ffb300', 0.3),
+                      borderRadius: 1,
+                      cursor: 'pointer',
+                      '&:hover': { borderColor: '#ffb300' },
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{t.title}</Typography>
+                    <Chip
+                      data-testid="sprint-done-badge"
+                      label="~DONE"
+                      size="small"
+                      sx={{
+                        fontSize: '9px',
+                        fontWeight: 800,
+                        height: 18,
+                        bgcolor: alpha('#ffb300', 0.2),
+                        color: '#ffb300',
+                        border: '1px solid',
+                        borderColor: alpha('#ffb300', 0.5),
+                      }}
+                    />
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          </Grid>
+        )}
 
         {/* Row 2: Active Threads */}
         <Grid size={{ xs: 12 }}>
