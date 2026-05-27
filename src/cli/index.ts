@@ -15,6 +15,7 @@ import { register as registerDiscover } from './commands/discover.js'
 import { register as registerArchive } from './commands/archive.js'
 import { register as registerPriority } from './commands/priority.js'
 import { register as registerLaunch } from './commands/launch.js'
+import { register as registerIntent } from './commands/intent.js'
 
 runMigrations()
 
@@ -37,5 +38,6 @@ registerDiscover(program)
 registerArchive(program)
 registerPriority(program)
 registerLaunch(program)
+registerIntent(program)
 
 program.parse()

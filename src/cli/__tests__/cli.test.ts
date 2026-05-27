@@ -27,6 +27,7 @@ async function setupProgram() {
   const { register: registerArchive } = await import('../commands/archive.js')
   const { register: registerPriority } = await import('../commands/priority.js')
   const { register: registerLaunch } = await import('../commands/launch.js')
+  const { register: registerIntent } = await import('../commands/intent.js')
 
   const program = new Command()
     .name('finn')
@@ -44,6 +45,7 @@ async function setupProgram() {
   registerArchive(program)
   registerPriority(program)
   registerLaunch(program)
+  registerIntent(program)
 
   const db = await import('../../db/threads.js')
   const sessionDb = await import('../../db/sessions.js')
@@ -635,5 +637,57 @@ describe('finn done — launch gate warning', () => {
     await program.parseAsync(['node', 'finn', 'done', t.id])
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
     expect(output).not.toContain('Launch gate incomplete')
+  })
+})
+
+// ── finn intent ────────────────────────────────────────────────────────────
+
+describe('finn intent', () => {
+  it('saves intent to open session matching current directory', async () => {
+    const { program, sessionDb } = await setupProgram()
+    const projectPath = process.cwd()
+    const s = sessionDb.createSession({ agent: 'claude_code', startedAt: new Date(), projectPath })
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'intent', 'Fix the login bug'])
+    const { getDb } = await import('../../db/db.js')
+    const { sessions } = await import('../../db/schema.js')
+    const { eq } = await import('drizzle-orm')
+    const updated = getDb().select().from(sessions).where(eq(sessions.id, s.id)).get()!
+    expect(updated.intent).toBe('Fix the login bug')
+  })
+
+  it('prints error and exits 1 when no open session matches cwd', async () => {
+    const { program } = await setupProgram()
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
+    try {
+      await program.parseAsync(['node', 'finn', 'intent', 'Some intent'])
+    } catch { /* expected */ }
+    expect(errSpy.mock.calls.some(c => String(c[0]).includes('No active session'))).toBe(true)
+    expect(process.exitCode).toBe(1)
+    exitSpy.mockRestore()
+  })
+})
+
+// ── finn sessions — Intent column ──────────────────────────────────────────
+
+describe('finn sessions — intent column', () => {
+  it('shows intent text when session has intent', async () => {
+    const { program, sessionDb } = await setupProgram()
+    const s = sessionDb.createSession({ agent: 'claude_code', startedAt: new Date(), projectPath: '/tmp' })
+    sessionDb.setSessionIntent(s.id, 'Implement feature X')
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'sessions'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Implement feature X')
+  })
+
+  it('shows — when session has no intent', async () => {
+    const { program, sessionDb } = await setupProgram()
+    sessionDb.createSession({ agent: 'claude_code', startedAt: new Date(), projectPath: '/tmp' })
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'sessions'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('—')
   })
 })
