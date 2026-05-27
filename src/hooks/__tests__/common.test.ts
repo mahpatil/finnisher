@@ -248,6 +248,27 @@ describe('ensureThreadId', () => {
     rmSync(home, { recursive: true })
   })
 
+  it('heals a stale .finn-thread file when the resolved thread differs', async () => {
+    const home = await setupDb()
+    const { createThread } = await import('../../db/threads.js')
+    const { createSession } = await import('../../db/sessions.js')
+    const { ensureThreadId } = await import('../common.js')
+    const dir = join(tempDir(), 'myproject')
+    mkdirSync(dir)
+    // Simulate post-DB-wipe state: a new thread was already created and linked to a session
+    const good = createThread({ title: 'myproject Development', nextAction: 'A', state: 'open', owner: 'you' })
+    createSession({ agent: 'claude_code', startedAt: new Date(), projectPath: dir, folderName: 'myproject', threadId: good.id, githubUrl: null })
+    // .finn-thread still points to the old (now-deleted) thread ID
+    writeFileSync(join(dir, '.finn-thread'), 'STALE_ID\n')
+    const result = ensureThreadId(dir)
+    expect(result).toBe(good.id)
+    // File must now be healed to point to the correct thread
+    const healed = readFileSync(join(dir, '.finn-thread'), 'utf8').trim()
+    expect(healed).toBe(good.id)
+    rmSync(dir, { recursive: true })
+    rmSync(home, { recursive: true })
+  })
+
   it('still returns a thread id when .finn-thread write fails due to missing parent dir', async () => {
     const home = await setupDb()
     const { ensureThreadId } = await import('../common.js')

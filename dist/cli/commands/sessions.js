@@ -15,7 +15,7 @@ export function register(program) {
         .action((opts) => {
         const all = listSessions({ threadId: opts.thread, limit: 20 });
         const table = new Table({
-            head: ['ID', 'Agent', 'Thread', 'Started', 'Duration', 'Tokens In', 'Tokens Out', 'Cost', 'Branch', 'Last Commit', 'Unpushed', 'Folder', 'Repo'],
+            head: ['ID', 'Agent', 'Thread', 'Started', 'Duration', 'Tokens In', 'Tokens Out', 'Cost', 'Branch', 'Last Commit', 'Unpushed', 'Folder', 'Repo', 'Intent'],
             style: { head: ['cyan'] },
         });
         for (const s of all) {
@@ -28,6 +28,7 @@ export function register(program) {
             const repo = s.githubUrl
                 ? truncate(s.githubUrl, 30)
                 : '—';
+            const intent = s.intent ? truncate(s.intent, 30) : '—';
             table.push([
                 s.id,
                 agentLabel(s.agent),
@@ -42,6 +43,7 @@ export function register(program) {
                 s.unpushedCount?.toString() ?? '—',
                 s.folderName ?? '—',
                 repo,
+                intent,
             ]);
         }
         console.log(table.toString());

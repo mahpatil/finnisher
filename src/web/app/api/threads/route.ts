@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { runMigrations } from '@db/migrate'
 import { listThreads, createThread, isStalled, overloadWarning } from '@db/threads'
+import { listTodoCounts } from '@db/todos'
+import { computeCompletionPct } from '@db/completionPct'
+import { isLaunchReady } from '@db/launchCriteria'
 import { THREAD_STATES, THREAD_PRIORITIES } from '@db/schema'
 import type { ThreadState, ThreadPriority } from '@db/schema'
 
@@ -20,6 +23,10 @@ export interface ThreadWithMeta {
   archivedAt: string | null
   stalled: boolean
   momentum: number
+  todoDone: number
+  todoTotal: number
+  completionPct: number
+  launchReady: boolean
 }
 
 export interface ThreadsResponse {
@@ -27,7 +34,11 @@ export interface ThreadsResponse {
   focusWarning: { level: string; count: number; message: string; suggestions: ThreadWithMeta[] } | null
 }
 
-function serialize(thread: ReturnType<typeof listThreads>[number]): ThreadWithMeta {
+function serialize(
+  thread: ReturnType<typeof listThreads>[number],
+  counts: Record<string, { done: number; total: number }>
+): ThreadWithMeta {
+  const c = counts[thread.id] ?? { done: 0, total: 0 }
   return {
     id: thread.id,
     title: thread.title,
@@ -42,6 +53,10 @@ function serialize(thread: ReturnType<typeof listThreads>[number]): ThreadWithMe
     archivedAt: thread.archivedAt?.toISOString() ?? null,
     stalled: isStalled(thread),
     momentum: thread.momentum,
+    todoDone: c.done,
+    todoTotal: c.total,
+    completionPct: computeCompletionPct(thread.id),
+    launchReady: isLaunchReady(thread.id),
   }
 }
 
@@ -73,11 +88,12 @@ export function GET(request: Request) {
     filtered = filtered.filter(t => t.priority === priorityParam)
   }
 
+  const counts = listTodoCounts(all.map(t => t.id))
   const warning = overloadWarning(all)
   const response: ThreadsResponse = {
-    threads: filtered.map(serialize),
+    threads: filtered.map(t => serialize(t, counts)),
     focusWarning: warning
-      ? { ...warning, suggestions: warning.suggestions.map(serialize) }
+      ? { ...warning, suggestions: warning.suggestions.map(t => serialize(t, counts)) }
       : null,
   }
   return NextResponse.json(response)
@@ -118,7 +134,7 @@ export async function POST(request: Request) {
       notes: body.notes ?? null,
       completedAt: state === 'closed' ? new Date() : null,
     })
-    return NextResponse.json(serialize(thread), { status: 201 })
+    return NextResponse.json(serialize(thread, {}), { status: 201 })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json({ error: message }, { status: 422 })

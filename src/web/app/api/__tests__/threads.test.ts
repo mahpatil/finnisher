@@ -312,3 +312,25 @@ describe('DELETE /api/threads/:id', () => {
     expect(res.status).toBe(404)
   })
 })
+
+// ── completionPct field on GET /api/threads ───────────────────────────────
+
+describe('GET /api/threads — completionPct', () => {
+  it('includes completionPct field (0 for fresh thread) on each thread', async () => {
+    const { threadsRoute } = await setup()
+    const { createThread } = await import('@db/threads')
+    createThread({ title: 'Fresh', nextAction: 'x', state: 'open', owner: 'you' })
+    const res = threadsRoute.GET(makeRequest('http://localhost/api/threads'))
+    const body = await res.json() as { threads: Array<{ completionPct: number }> }
+    expect(typeof body.threads[0].completionPct).toBe('number')
+  })
+
+  it('includes launchReady field on each thread', async () => {
+    const { threadsRoute } = await setup()
+    const { createThread } = await import('@db/threads')
+    createThread({ title: 'Fresh', nextAction: 'x', state: 'open', owner: 'you' })
+    const res = threadsRoute.GET(makeRequest('http://localhost/api/threads'))
+    const body = await res.json() as { threads: Array<{ launchReady: boolean }> }
+    expect(typeof body.threads[0].launchReady).toBe('boolean')
+  })
+})

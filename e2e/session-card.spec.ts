@@ -32,6 +32,26 @@ test.describe('SessionCard — 6.1 folderName badge', () => {
   })
 })
 
+test.describe('SessionCard — 6.3 intent text', () => {
+  test('shows intent text when session has intent set', async ({ page }) => {
+    const seedRes = await page.request.post('/api/sessions/seed', {
+      data: { agent: 'claude_code', intent: 'Implement the login feature' },
+    })
+    const seeded = await seedRes.json() as { id: string }
+    await page.goto('/sessions')
+    await page.waitForSelector('[data-testid="session-card"]')
+    await expect(page.getByTestId('session-intent').first()).toContainText('Implement the login feature')
+    void seeded
+  })
+
+  test('does not show intent element when session has no intent', async ({ page }) => {
+    await seedSession(page, { agent: 'manual' })
+    await page.goto('/sessions')
+    await page.waitForSelector('[data-testid="session-card"]')
+    await expect(page.getByTestId('session-intent')).toHaveCount(0)
+  })
+})
+
 test.describe('SessionCard — 6.2 githubUrl link', () => {
   test('shows github-link when session has a githubUrl', async ({ page }) => {
     await seedSession(page, {

@@ -29,7 +29,11 @@ export interface ThreadData {
   updatedAt: string
   completedAt: string | null
   archivedAt: string | null
+  completionPct?: number
+  launchReady?: boolean
   lastVelocity?: number
+  todoDone?: number
+  todoTotal?: number
 }
 
 interface Props {
@@ -74,6 +78,8 @@ export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaitin
           bgcolor: alpha('#00e471', 0.02),
           borderColor: alpha('#00e471', 0.3),
         } : {},
+        ...(thread.priority === 'now' && { borderLeft: '4px solid #f44336' }),
+        ...(thread.priority === 'next' && { borderLeft: '4px solid #ff9800' }),
         ...(isStalled && {
           border: '1px solid',
           borderColor: alpha('#ffb4ab', 0.3),
@@ -187,6 +193,21 @@ export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaitin
             <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.625rem' }}>
               AGENT: CLAUDE
             </Typography>
+            {(thread.todoTotal ?? 0) > 0 && (
+              <Chip
+                data-testid="todo-count-chip"
+                label={`${thread.todoDone ?? 0}/${thread.todoTotal} ✓`}
+                size="small"
+                sx={{
+                  fontSize: '9px',
+                  height: 18,
+                  ...(thread.todoDone === thread.todoTotal && {
+                    bgcolor: 'success.dark',
+                    color: 'success.contrastText',
+                  }),
+                }}
+              />
+            )}
           </Box>
 
           {isArchived ? (

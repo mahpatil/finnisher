@@ -26,6 +26,27 @@ export function listSessions(opts) {
     return results;
 }
 export function getOpenSessions() {
-    return getDb().select().from(sessions).where(isNull(sessions.endedAt)).all();
+    return getDb().select().from(sessions).where(isNull(sessions.endedAt)).orderBy(desc(sessions.startedAt)).all();
+}
+export function getOpenSessionForPath(projectPath) {
+    return getDb()
+        .select()
+        .from(sessions)
+        .where(and(isNull(sessions.endedAt), eq(sessions.projectPath, projectPath)))
+        .orderBy(desc(sessions.startedAt))
+        .get();
+}
+export function setSessionIntent(id, intent) {
+    const existing = getDb().select().from(sessions).where(eq(sessions.id, id)).get();
+    if (!existing)
+        throw new Error(`Session not found: ${id}`);
+    getDb().update(sessions).set({ intent }).where(eq(sessions.id, id)).run();
+}
+export function backfillNullThreadSessions(projectPath, threadId) {
+    getDb()
+        .update(sessions)
+        .set({ threadId })
+        .where(and(eq(sessions.projectPath, projectPath), isNull(sessions.threadId)))
+        .run();
 }
 //# sourceMappingURL=sessions.js.map

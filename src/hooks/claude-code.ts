@@ -1,13 +1,25 @@
-import { appendHookLog, captureGitState, getFolderName, getGithubUrl, getThreadId, ensureThreadId, extractUsageMetrics, detectEffortType } from './common.js'
-import { closeSession, createSession, getOpenSessions } from '../db/sessions.js'
+import { appendHookLog, captureGitState, getFolderName, getGithubUrl, ensureThreadId, extractUsageMetrics, detectEffortType } from './common.js'
+import { backfillNullThreadSessions, closeSession, createSession, getOpenSessions } from '../db/sessions.js'
 import { touchThread } from '../db/threads.js'
+
+const STALE_SESSION_MS = 24 * 60 * 60 * 1000
 
 export function handleClaudeStart(payload: unknown, cwd?: string): void {
   void payload
   try {
     const dir = cwd ?? process.env['CLAUDE_PROJECT_DIR'] ?? process.cwd()
     const existing = getOpenSessions().find(s => s.agent === 'claude_code' && s.projectPath === dir)
-    if (existing) return
+    if (existing) {
+      const ageMs = Date.now() - existing.startedAt.getTime()
+      if (ageMs < STALE_SESSION_MS) {
+        // Same-day session — deduplicate but keep the thread fresh
+        if (existing.threadId) touchThread(existing.threadId)
+        return
+      }
+      // Stale session — auto-close before starting a new one
+      closeSession(existing.id, { endedAt: new Date(), frictionScore: 0, effortType: 'validation' })
+      appendHookLog(`claude-start: auto-closed stale session ${existing.id} (age: ${Math.round(ageMs / 3600000)}h)`)
+    }
     const githubUrl = getGithubUrl(dir)
     const folderName = getFolderName(dir)
     const threadId = ensureThreadId(dir)
@@ -19,7 +31,10 @@ export function handleClaudeStart(payload: unknown, cwd?: string): void {
       threadId,
       projectPath: dir,
     })
-    if (threadId) touchThread(threadId)
+    if (threadId) {
+      touchThread(threadId)
+      backfillNullThreadSessions(dir, threadId)
+    }
     appendHookLog(`claude-start: created session ${session.id} folder=${folderName ?? 'null'} threadId=${threadId ?? 'null'}`)
   } catch (err) {
     appendHookLog(`claude-start error: ${String(err)}`)

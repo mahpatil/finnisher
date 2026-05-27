@@ -26,6 +26,9 @@ async function setupProgram() {
   const { register: registerWeb } = await import('../commands/web.js')
   const { register: registerArchive } = await import('../commands/archive.js')
   const { register: registerPriority } = await import('../commands/priority.js')
+  const { register: registerLaunch } = await import('../commands/launch.js')
+  const { register: registerIntent } = await import('../commands/intent.js')
+  const { register: registerWeek } = await import('../commands/week.js')
 
   const program = new Command()
     .name('finn')
@@ -42,11 +45,15 @@ async function setupProgram() {
   registerWeb(program)
   registerArchive(program)
   registerPriority(program)
+  registerLaunch(program)
+  registerIntent(program)
+  registerWeek(program)
 
   const db = await import('../../db/threads.js')
   const sessionDb = await import('../../db/sessions.js')
+  const lcDb = await import('../../db/launchCriteria.js')
 
-  return { program, db, sessionDb, dbPath }
+  return { program, db, sessionDb, lcDb, dbPath }
 }
 
 afterEach(async () => {
@@ -555,5 +562,197 @@ describe('finn list --priority', () => {
     } catch { /* expected */ }
     expect(process.exitCode).toBe(1)
     exitSpy.mockRestore()
+  })
+})
+
+// ── finn list — [~DONE] sprint candidate badge ─────────────────────────────
+
+describe('finn list — [~DONE] sprint badge', () => {
+  it('shows [~DONE] badge when completionPct >= 0.75 and not fully launch-ready', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'Sprint Candidate', nextAction: 'Ship', state: 'open', owner: 'you' })
+    // Set up: todo done (0.4) + sessions (0.2) + no open blockers (0.2) = 0.8, no criteria (not launchReady)
+    const { getSqlite } = await import('../../db/db.js')
+    const { createTodo } = await import('../../db/todos.js')
+    const todo = createTodo(t.id, 'Task')
+    getSqlite().prepare('UPDATE thread_todos SET done=1 WHERE id=?').run(todo.id)
+    const { createSession } = await import('../../db/sessions.js')
+    for (let i = 0; i < 3; i++) {
+      createSession({ agent: 'claude_code', startedAt: new Date(), threadId: t.id, projectPath: '/tmp' })
+    }
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'list'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('[~DONE]')
+  })
+})
+
+// ── finn list — launch gate badge ──────────────────────────────────────────
+
+describe('finn list — [READY] badge', () => {
+  it('shows [READY] badge when all launch criteria are checked', async () => {
+    const { program, db, lcDb } = await setupProgram()
+    const t = db.createThread({ title: 'Ready Project', nextAction: 'Ship', state: 'open', owner: 'you' })
+    const c1 = lcDb.addLaunchCriterion(t.id, 'Deployed to prod')
+    const c2 = lcDb.addLaunchCriterion(t.id, 'Announced publicly')
+    lcDb.toggleLaunchCriterion(c1.id, true)
+    lcDb.toggleLaunchCriterion(c2.id, true)
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'list'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('[READY]')
+  })
+
+  it('does not show [READY] badge when criteria are partially checked', async () => {
+    const { program, db, lcDb } = await setupProgram()
+    const t = db.createThread({ title: 'Partial Project', nextAction: 'Work', state: 'open', owner: 'you' })
+    const c = lcDb.addLaunchCriterion(t.id, 'Deployed to prod')
+    lcDb.addLaunchCriterion(t.id, 'Announced')
+    lcDb.toggleLaunchCriterion(c.id, true)
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'list'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).not.toContain('[READY]')
+  })
+})
+
+// ── finn done — launch gate warning ────────────────────────────────────────
+
+describe('finn done — launch gate warning', () => {
+  it('warns when criteria exist but are not all checked', async () => {
+    const { program, db, lcDb } = await setupProgram()
+    const t = db.createThread({ title: 'Unfinished', nextAction: 'Ship', state: 'open', owner: 'you' })
+    lcDb.addLaunchCriterion(t.id, 'Deployed to prod')
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'done', t.id])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Launch gate incomplete')
+    expect(db.getThread(t.id)?.state).toBe('closed')
+  })
+
+  it('does not warn when all criteria are checked', async () => {
+    const { program, db, lcDb } = await setupProgram()
+    const t = db.createThread({ title: 'Finished', nextAction: 'Ship', state: 'open', owner: 'you' })
+    const c = lcDb.addLaunchCriterion(t.id, 'Deployed to prod')
+    lcDb.toggleLaunchCriterion(c.id, true)
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'done', t.id])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).not.toContain('Launch gate incomplete')
+  })
+})
+
+// ── finn intent ────────────────────────────────────────────────────────────
+
+describe('finn intent', () => {
+  it('saves intent to open session matching current directory', async () => {
+    const { program, sessionDb } = await setupProgram()
+    const projectPath = process.cwd()
+    const s = sessionDb.createSession({ agent: 'claude_code', startedAt: new Date(), projectPath })
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'intent', 'Fix the login bug'])
+    const { getDb } = await import('../../db/db.js')
+    const { sessions } = await import('../../db/schema.js')
+    const { eq } = await import('drizzle-orm')
+    const updated = getDb().select().from(sessions).where(eq(sessions.id, s.id)).get()!
+    expect(updated.intent).toBe('Fix the login bug')
+  })
+
+  it('prints error and exits 1 when no open session matches cwd', async () => {
+    const { program } = await setupProgram()
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
+    try {
+      await program.parseAsync(['node', 'finn', 'intent', 'Some intent'])
+    } catch { /* expected */ }
+    expect(errSpy.mock.calls.some(c => String(c[0]).includes('No active session'))).toBe(true)
+    expect(process.exitCode).toBe(1)
+    exitSpy.mockRestore()
+  })
+
+  it('prints error and exits 1 when text is empty', async () => {
+    const { program } = await setupProgram()
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
+    try {
+      await program.parseAsync(['node', 'finn', 'intent', '   '])
+    } catch { /* expected */ }
+    expect(errSpy.mock.calls.some(c => String(c[0]).includes('Intent cannot be empty'))).toBe(true)
+    expect(process.exitCode).toBe(1)
+    exitSpy.mockRestore()
+  })
+})
+
+// ── finn sessions — Intent column ──────────────────────────────────────────
+
+describe('finn sessions — intent column', () => {
+  it('shows intent text when session has intent', async () => {
+    const { program, sessionDb } = await setupProgram()
+    const s = sessionDb.createSession({ agent: 'claude_code', startedAt: new Date(), projectPath: '/tmp' })
+    sessionDb.setSessionIntent(s.id, 'Implement feature X')
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'sessions'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Implement feature X')
+  })
+
+  it('shows — when session has no intent', async () => {
+    const { program, sessionDb } = await setupProgram()
+    sessionDb.createSession({ agent: 'claude_code', startedAt: new Date(), projectPath: '/tmp' })
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'sessions'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('—')
+  })
+})
+
+// ── finn week ──────────────────────────────────────────────────────────────
+
+describe('finn week', () => {
+  it('shows zero stats when nothing exists in the period', async () => {
+    const { program } = await setupProgram()
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'week'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Shipped')
+    expect(output).toContain('Sessions')
+    expect(output).toContain('AI cost')
+  })
+
+  it('counts closed threads as Shipped', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'Ship Me', nextAction: 'N', state: 'open', owner: 'you' })
+    const { updateState } = await import('../../db/threads.js')
+    updateState(t.id, 'closed')
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'week'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toMatch(/Shipped.*1/i)
+  })
+
+  it('--json flag outputs valid JSON with required fields', async () => {
+    const { program } = await setupProgram()
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'week', '--json'])
+    const raw = spy.mock.calls.map(c => c[0] as string).join('')
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    expect(parsed).toHaveProperty('threadsClosed')
+    expect(parsed).toHaveProperty('sessionCount')
+    expect(parsed).toHaveProperty('totalCostUsd')
+    expect(parsed).toHaveProperty('todosDone')
+  })
+})
+
+// ── finn day ───────────────────────────────────────────────────────────────
+
+describe('finn day', () => {
+  it('shows today scoped output with same structure as finn week', async () => {
+    const { program } = await setupProgram()
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'day'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Shipped')
+    expect(output).toContain('Sessions')
+    expect(output).toContain('AI cost')
   })
 })

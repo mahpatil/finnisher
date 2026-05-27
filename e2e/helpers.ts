@@ -38,6 +38,7 @@ export async function seedSession(
   request: APIRequestContext,
   opts: {
     agent?: string
+    threadId?: string
     tokensIn?: number
     tokensOut?: number
     costUsd?: number
@@ -61,6 +62,7 @@ export async function seedSession(
       unpushedCount: opts.unpushedCount ?? 0,
       gitBranch: opts.gitBranch ?? 'main',
       lastCommitMsg: opts.lastCommitMsg ?? 'chore: test',
+      ...(opts.threadId ? { threadId: opts.threadId } : {}),
       ...(opts.githubUrl ? { githubUrl: opts.githubUrl } : {}),
       ...(opts.folderName ? { folderName: opts.folderName } : {}),
     },

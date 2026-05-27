@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     agent: (data['agent'] as 'claude_code' | 'codex' | 'opencode' | 'manual') ?? 'manual',
     startedAt: data['startedAt'] ? new Date(data['startedAt'] as string) : new Date(),
     endedAt: data['endedAt'] ? new Date(data['endedAt'] as string) : null,
+    threadId: (data['threadId'] as string | null) ?? null,
     tokensIn: (data['tokensIn'] as number | null) ?? null,
     tokensOut: (data['tokensOut'] as number | null) ?? null,
     costUsd: (data['costUsd'] as number | null) ?? null,
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
     projectPath: (data['projectPath'] as string | null) ?? null,
     folderName: (data['folderName'] as string | null) ?? null,
     githubUrl: (data['githubUrl'] as string | null) ?? null,
+    intent: (data['intent'] as string | null) ?? null,
   })
   return NextResponse.json(session)
 }

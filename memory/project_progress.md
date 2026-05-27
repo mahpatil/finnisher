@@ -1,5 +1,13 @@
 # Finnisher — Project Progress
 
+## Step 10 — Finish Engine (v0.3) — ✅ Done (2026-05-27)
+Commits: `fd30ab7` → `493dafb`
+Summary: F3 abandon prevention at `finn add` (stall interrupt with configurable threshold); F1 launch gate per-thread criteria with `finn launch`, `[READY]` badge, dashboard checkboxes; F2 completion signal (4-factor formula) with `[~DONE]` badge in list and Sprint Candidates dashboard section; F4 session intent (`finn intent`, sessions table `intent` column, SessionCard display); F5 `finn week`/`finn day` execution summary commands; 352 unit tests + 46 Playwright.
+
+## Step 9 — Responsive UI, Thread Todos, Priority Card Highlights — ✅ Done (2026-05-25)
+Commits: `2fb2445` → `a783da0`
+Summary: Mobile-responsive sidebar (hamburger + temporary drawer), desktop sidebar collapse toggle, red/orange left border on now/next thread cards, per-thread todo checklist (add/toggle/edit/delete) with SWR persistence, done/total ✓ chip on thread cards; 24 unit tests + 19 Playwright e2e tests.
+
 ## Step 8 — Dashboard PATCH Error Handling — ✅ Done (2026-05-25)
 Commits: `792efa4` → `4d986b5`
 Summary: Extracted shared `patchThread` helper to `src/web/lib/api.ts` (throws on non-2xx); added `errorMsg` state + MUI Snackbar to Dashboard and Threads pages; 5 unit tests + 5 Playwright e2e tests; `dev:network` script for LAN access.
@@ -37,4 +45,4 @@ Commits: `feat/01-core-db`
 Summary: Drizzle ORM + better-sqlite3 schema, CRUD functions, WAL mode.
 
 ## Next Up
-Step 9 — TBD (define in next /spec)
+Step 11 — TBD (define in next /spec)

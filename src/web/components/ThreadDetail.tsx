@@ -15,6 +15,8 @@ import BoltIcon from '@mui/icons-material/Bolt'
 import WarningIcon from '@mui/icons-material/Warning'
 import { ThreadData } from './ThreadCard'
 import { SessionCard, SessionData } from './SessionCard'
+import { TodoSection } from './TodoSection'
+import { LaunchCriteriaSection } from './LaunchCriteriaSection'
 
 const PRIORITIES = ['now', 'next', 'later', 'out'] as const
 const PRIORITY_LABELS: Record<string, string> = { now: 'NOW', next: 'NEXT', later: 'LATER', out: 'OUT' }
@@ -33,7 +35,7 @@ export function ThreadDetail({ thread, sessions, onBack, onUpdatePriority }: Pro
   return (
     <Box>
       <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Button onClick={onBack} size="small" variant="text" sx={{ color: 'text.secondary' }}>
+        <Button data-testid="back-button" onClick={onBack} size="small" variant="text" sx={{ color: 'text.secondary' }}>
           ← Back to Engine
         </Button>
       </Box>
@@ -138,6 +140,16 @@ export function ThreadDetail({ thread, sessions, onBack, onUpdatePriority }: Pro
                   {PRIORITY_LABELS[thread.priority] ?? thread.priority}
                 </Typography>
               )}
+            </Box>
+
+            {/* Todos */}
+            <Box sx={{ p: 3, bgcolor: alpha('#1A1A1A', 0.4), borderRadius: 2, border: '0.5px solid', borderColor: 'divider' }}>
+              <TodoSection threadId={thread.id} />
+            </Box>
+
+            {/* Launch Gate */}
+            <Box sx={{ p: 3, bgcolor: alpha('#1A1A1A', 0.4), borderRadius: 2, border: '0.5px solid', borderColor: 'divider' }}>
+              <LaunchCriteriaSection threadId={thread.id} />
             </Box>
           </Box>
         </Grid>
