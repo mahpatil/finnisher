@@ -2,6 +2,9 @@ import Table from 'cli-table3';
 import { listThreads, isStalled, overloadWarning } from '../../db/threads.js';
 import { THREAD_STATES, THREAD_PRIORITIES } from '../../db/schema.js';
 import { stateBadge, stalledBadge, printFocusWarning } from '../ui/format.js';
+import { isLaunchReady } from '../../db/launchCriteria.js';
+import { computeCompletionPct } from '../../db/completionPct.js';
+const SPRINT_THRESHOLD = 0.75;
 const STATE_ORDER = {
     new: 0, open: 1, waiting: 2, blocked: 3, closed: 4, archived: 5,
 };
@@ -71,6 +74,10 @@ export function register(program) {
         const sorted = sortThreads(filtered);
         for (const t of sorted) {
             const stalled = isStalled(t);
+            const ready = isLaunchReady(t.id);
+            const pct = computeCompletionPct(t.id);
+            const isSprint = pct >= SPRINT_THRESHOLD;
+            const statusBadge = ready ? '[READY]' : isSprint ? '[~DONE]' : stalled ? stalledBadge() : '';
             table.push([
                 t.id,
                 truncate(t.title, 30),
@@ -79,7 +86,7 @@ export function register(program) {
                 t.owner,
                 truncate(t.nextAction, 35),
                 relativeDate(t.updatedAt),
-                stalled ? stalledBadge() : '',
+                statusBadge,
             ]);
         }
         console.log(table.toString());

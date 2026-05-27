@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { runMigrations } from '@db/migrate'
 import { listThreads, createThread, isStalled, overloadWarning } from '@db/threads'
 import { listTodoCounts } from '@db/todos'
+import { computeCompletionPct } from '@db/completionPct'
+import { isLaunchReady } from '@db/launchCriteria'
 import { THREAD_STATES, THREAD_PRIORITIES } from '@db/schema'
 import type { ThreadState, ThreadPriority } from '@db/schema'
 
@@ -23,6 +25,8 @@ export interface ThreadWithMeta {
   momentum: number
   todoDone: number
   todoTotal: number
+  completionPct: number
+  launchReady: boolean
 }
 
 export interface ThreadsResponse {
@@ -51,6 +55,8 @@ function serialize(
     momentum: thread.momentum,
     todoDone: c.done,
     todoTotal: c.total,
+    completionPct: computeCompletionPct(thread.id),
+    launchReady: isLaunchReady(thread.id),
   }
 }
 

@@ -37,6 +37,7 @@ export const sessions = sqliteTable('sessions', {
     projectPath: text('project_path'),
     folderName: text('folder_name'),
     githubUrl: text('github_url'),
+    intent: text('intent'),
 });
 export const blockers = sqliteTable('blockers', {
     id: text('id').primaryKey(),
@@ -53,5 +54,14 @@ export const threadTodos = sqliteTable('thread_todos', {
     position: integer('position').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
+});
+export const launchCriteria = sqliteTable('launch_criteria', {
+    id: text('id').primaryKey(),
+    threadId: text('thread_id').notNull().references(() => threads.id, { onDelete: 'cascade' }),
+    text: text('text').notNull(),
+    checked: integer('checked', { mode: 'boolean' }).notNull().default(false),
+    position: integer('position').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    checkedAt: integer('checked_at', { mode: 'timestamp_ms' }),
 });
 //# sourceMappingURL=schema.js.map

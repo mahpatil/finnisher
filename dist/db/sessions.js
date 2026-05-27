@@ -28,6 +28,12 @@ export function listSessions(opts) {
 export function getOpenSessions() {
     return getDb().select().from(sessions).where(isNull(sessions.endedAt)).all();
 }
+export function setSessionIntent(id, intent) {
+    const existing = getDb().select().from(sessions).where(eq(sessions.id, id)).get();
+    if (!existing)
+        throw new Error(`Session not found: ${id}`);
+    getDb().update(sessions).set({ intent }).where(eq(sessions.id, id)).run();
+}
 export function backfillNullThreadSessions(projectPath, threadId) {
     getDb()
         .update(sessions)
