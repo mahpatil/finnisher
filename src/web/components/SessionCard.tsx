@@ -15,6 +15,7 @@ export interface SessionData {
   agent: string
   agentId: string | null
   threadId: string | null
+  intent: string | null
   startedAt: string
   endedAt: string | null
   tokensIn: number | null
@@ -97,6 +98,15 @@ export function SessionCard({ session }: { session: SessionData }) {
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
             {session.folderName ? `Project: ${session.folderName}` : session.projectPath}
           </Typography>
+          {session.intent && (
+            <Typography
+              data-testid="session-intent"
+              variant="caption"
+              sx={{ color: 'primary.main', fontStyle: 'italic', display: 'block', mt: 0.25 }}
+            >
+              → {session.intent}
+            </Typography>
+          )}
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, textAlign: 'right' }}>

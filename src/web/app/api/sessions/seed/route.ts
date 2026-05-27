@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     projectPath: (data['projectPath'] as string | null) ?? null,
     folderName: (data['folderName'] as string | null) ?? null,
     githubUrl: (data['githubUrl'] as string | null) ?? null,
+    intent: (data['intent'] as string | null) ?? null,
   })
   return NextResponse.json(session)
 }
