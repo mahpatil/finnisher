@@ -225,14 +225,14 @@ describe('finn setup — OpenCode plugin', () => {
 })
 
 describe('finn setup — Gemini CLI hooks', () => {
-  function withGeminiOnPath<T>(fn: (origPath: string | undefined) => T): T {
+  async function withGeminiOnPath(fn: (origPath: string | undefined) => Promise<void>): Promise<void> {
     const binDir = tempDir()
     writeFileSync(join(binDir, 'gemini'), '#!/bin/bash\necho gemini\n')
     chmodSync(join(binDir, 'gemini'), 0o755)
     const origPath = process.env['PATH']
     process.env['PATH'] = `${binDir}:${origPath ?? ''}`
     try {
-      return fn(origPath)
+      await fn(origPath)
     } finally {
       process.env['PATH'] = origPath
     }
