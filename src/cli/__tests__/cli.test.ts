@@ -28,6 +28,7 @@ async function setupProgram() {
   const { register: registerPriority } = await import('../commands/priority.js')
   const { register: registerLaunch } = await import('../commands/launch.js')
   const { register: registerIntent } = await import('../commands/intent.js')
+  const { register: registerWeek } = await import('../commands/week.js')
 
   const program = new Command()
     .name('finn')
@@ -46,6 +47,7 @@ async function setupProgram() {
   registerPriority(program)
   registerLaunch(program)
   registerIntent(program)
+  registerWeek(program)
 
   const db = await import('../../db/threads.js')
   const sessionDb = await import('../../db/sessions.js')
@@ -689,5 +691,56 @@ describe('finn sessions — intent column', () => {
     await program.parseAsync(['node', 'finn', 'sessions'])
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
     expect(output).toContain('—')
+  })
+})
+
+// ── finn week ──────────────────────────────────────────────────────────────
+
+describe('finn week', () => {
+  it('shows zero stats when nothing exists in the period', async () => {
+    const { program } = await setupProgram()
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'week'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Shipped')
+    expect(output).toContain('Sessions')
+    expect(output).toContain('AI cost')
+  })
+
+  it('counts closed threads as Shipped', async () => {
+    const { program, db } = await setupProgram()
+    const t = db.createThread({ title: 'Ship Me', nextAction: 'N', state: 'open', owner: 'you' })
+    const { updateState } = await import('../../db/threads.js')
+    updateState(t.id, 'closed')
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'week'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toMatch(/Shipped.*1/i)
+  })
+
+  it('--json flag outputs valid JSON with required fields', async () => {
+    const { program } = await setupProgram()
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'week', '--json'])
+    const raw = spy.mock.calls.map(c => c[0] as string).join('')
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    expect(parsed).toHaveProperty('threadsClosed')
+    expect(parsed).toHaveProperty('sessionCount')
+    expect(parsed).toHaveProperty('totalCostUsd')
+    expect(parsed).toHaveProperty('todosDone')
+  })
+})
+
+// ── finn day ───────────────────────────────────────────────────────────────
+
+describe('finn day', () => {
+  it('shows today scoped output with same structure as finn week', async () => {
+    const { program } = await setupProgram()
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'day'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Shipped')
+    expect(output).toContain('Sessions')
+    expect(output).toContain('AI cost')
   })
 })
