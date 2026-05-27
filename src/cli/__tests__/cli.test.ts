@@ -669,6 +669,18 @@ describe('finn intent', () => {
     expect(process.exitCode).toBe(1)
     exitSpy.mockRestore()
   })
+
+  it('prints error and exits 1 when text is empty', async () => {
+    const { program } = await setupProgram()
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('EXIT') })
+    try {
+      await program.parseAsync(['node', 'finn', 'intent', '   '])
+    } catch { /* expected */ }
+    expect(errSpy.mock.calls.some(c => String(c[0]).includes('Intent cannot be empty'))).toBe(true)
+    expect(process.exitCode).toBe(1)
+    exitSpy.mockRestore()
+  })
 })
 
 // ── finn sessions — Intent column ──────────────────────────────────────────

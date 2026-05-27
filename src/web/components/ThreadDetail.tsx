@@ -16,6 +16,7 @@ import WarningIcon from '@mui/icons-material/Warning'
 import { ThreadData } from './ThreadCard'
 import { SessionCard, SessionData } from './SessionCard'
 import { TodoSection } from './TodoSection'
+import { LaunchCriteriaSection } from './LaunchCriteriaSection'
 
 const PRIORITIES = ['now', 'next', 'later', 'out'] as const
 const PRIORITY_LABELS: Record<string, string> = { now: 'NOW', next: 'NEXT', later: 'LATER', out: 'OUT' }
@@ -144,6 +145,11 @@ export function ThreadDetail({ thread, sessions, onBack, onUpdatePriority }: Pro
             {/* Todos */}
             <Box sx={{ p: 3, bgcolor: alpha('#1A1A1A', 0.4), borderRadius: 2, border: '0.5px solid', borderColor: 'divider' }}>
               <TodoSection threadId={thread.id} />
+            </Box>
+
+            {/* Launch Gate */}
+            <Box sx={{ p: 3, bgcolor: alpha('#1A1A1A', 0.4), borderRadius: 2, border: '0.5px solid', borderColor: 'divider' }}>
+              <LaunchCriteriaSection threadId={thread.id} />
             </Box>
           </Box>
         </Grid>

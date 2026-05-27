@@ -36,7 +36,16 @@ export function listSessions(opts?: {
 }
 
 export function getOpenSessions(): Session[] {
-  return getDb().select().from(sessions).where(isNull(sessions.endedAt)).all()
+  return getDb().select().from(sessions).where(isNull(sessions.endedAt)).orderBy(desc(sessions.startedAt)).all()
+}
+
+export function getOpenSessionForPath(projectPath: string): Session | undefined {
+  return getDb()
+    .select()
+    .from(sessions)
+    .where(and(isNull(sessions.endedAt), eq(sessions.projectPath, projectPath)))
+    .orderBy(desc(sessions.startedAt))
+    .get()
 }
 
 export function setSessionIntent(id: string, intent: string): void {

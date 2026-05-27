@@ -12,9 +12,9 @@ async function setup() {
   vi.resetModules()
   const { runMigrations } = await import('../db/migrate.js')
   runMigrations()
-  const { createSession, setSessionIntent } = await import('../db/sessions.js')
+  const { createSession, setSessionIntent, getOpenSessionForPath } = await import('../db/sessions.js')
   const { createThread } = await import('../db/threads.js')
-  return { createSession, setSessionIntent, createThread }
+  return { createSession, setSessionIntent, getOpenSessionForPath, createThread }
 }
 
 afterEach(async () => {
@@ -48,5 +48,22 @@ describe('setSessionIntent', () => {
   it('throws if session does not exist', async () => {
     const { setSessionIntent } = await setup()
     expect(() => setSessionIntent('nope', 'text')).toThrow()
+  })
+})
+
+describe('getOpenSessionForPath', () => {
+  it('returns the most recent open session matching the path', async () => {
+    const { createSession, getOpenSessionForPath } = await setup()
+    const older = createSession({ agent: 'claude_code', startedAt: new Date(Date.now() - 7200_000), projectPath: '/proj' })
+    const newer = createSession({ agent: 'claude_code', startedAt: new Date(Date.now() - 3600_000), projectPath: '/proj' })
+    const result = getOpenSessionForPath('/proj')
+    expect(result?.id).toBe(newer.id)
+    void older
+  })
+
+  it('returns undefined when no open session matches', async () => {
+    const { createSession, getOpenSessionForPath } = await setup()
+    createSession({ agent: 'claude_code', startedAt: new Date(), endedAt: new Date(), projectPath: '/proj' })
+    expect(getOpenSessionForPath('/proj')).toBeUndefined()
   })
 })
