@@ -45,6 +45,7 @@ export const sessions = sqliteTable('sessions', {
   projectPath:   text('project_path'),
   folderName:    text('folder_name'),
   githubUrl:     text('github_url'),
+  intent:        text('intent'),
 })
 
 export const blockers = sqliteTable('blockers', {

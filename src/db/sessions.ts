@@ -39,6 +39,12 @@ export function getOpenSessions(): Session[] {
   return getDb().select().from(sessions).where(isNull(sessions.endedAt)).all()
 }
 
+export function setSessionIntent(id: string, intent: string): void {
+  const existing = getDb().select().from(sessions).where(eq(sessions.id, id)).get()
+  if (!existing) throw new Error(`Session not found: ${id}`)
+  getDb().update(sessions).set({ intent }).where(eq(sessions.id, id)).run()
+}
+
 export function backfillNullThreadSessions(projectPath: string, threadId: string): void {
   getDb()
     .update(sessions)
