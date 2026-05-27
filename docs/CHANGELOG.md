@@ -4,6 +4,46 @@
 
 ---
 
+### Step 10 — Finish Engine: Launch Gate, Completion Signal, Sprint Candidates, Session Intent, Weekly Summary (2026-05-27) ✅ APPROVED
+**Commits:** `fd30ab7` → `493dafb`
+
+**Added**
+- `src/lib/config.ts` — `readConfig()` helper; reads `stall_hours` from `~/.finnisher/config.json` (default 48h)
+- `src/cli/ui/abandonCheck.ts` — `getAbandonCandidates()` returns stalled threads for add-time friction gate
+- `src/cli/commands/add.ts` — stall interrupt: shows up to 5 stalled threads when `finn add` is run interactively with 2+ stalls; flag mode (`--title`/`--next`) bypasses it
+- `src/db/schema.ts` — `launchCriteria` table + types; `intent` field on sessions
+- `src/db/migrations/0005_launch_criteria.sql` — `launch_criteria` table with FK cascade
+- `src/db/migrations/0006_session_intent.sql` — `ALTER TABLE sessions ADD intent`
+- `src/db/launchCriteria.ts` — `getLaunchCriteria`, `addLaunchCriterion`, `toggleLaunchCriterion`, `deleteLaunchCriterion`, `isLaunchReady`
+- `src/db/completionPct.ts` — `computeCompletionPct(threadId)` weighted formula (todos 40%, sessions 20%, blockers 20%, criteria 20%)
+- `src/db/summaries.ts` — `weekSummary(from, to)` + `daySummary()` for `finn week`/`finn day`
+- `src/db/sessions.ts` — `setSessionIntent()`, `getOpenSessionForPath()` (orders by `startedAt DESC`)
+- `src/cli/commands/launch.ts` — `finn launch <id>` interactive criteria manager; `--check <N>` toggle
+- `src/cli/commands/intent.ts` — `finn intent "<text>"` saves intent to the active session for cwd; validates non-empty
+- `src/cli/commands/week.ts` — `finn week [--json]` and `finn day [--json]` summary commands
+- `src/web/app/api/threads/[id]/launch-criteria/route.ts` — `GET` + `POST` launch criteria
+- `src/web/app/api/threads/[id]/launch-criteria/[critId]/route.ts` — `PATCH` + `DELETE` individual criterion
+- `src/web/components/LaunchCriteriaSection.tsx` — SWR-powered checkbox list; hidden when no criteria
+- `src/web/components/ThreadDetail.tsx` — added `<LaunchCriteriaSection>` below Todos
+- `src/web/components/Dashboard.tsx` — Sprint Candidates section (amber `[~DONE]` chips) when `completionPct >= 0.75`
+- `src/web/components/SessionCard.tsx` — intent text shown below cost/tokens when set
+- `e2e/launch-criteria.spec.ts` — 3 Playwright tests (section visible, hidden when empty, checkbox PATCH)
+- `e2e/sprint-candidates.spec.ts` — 4 Playwright tests for Sprint Candidates section
+- `e2e/session-card.spec.ts` — 2 Playwright tests for intent display
+
+**Changed**
+- `src/cli/commands/list.ts` — `[READY]` badge when all criteria checked; `[~DONE]` badge when `completionPct >= 0.75`
+- `src/cli/commands/done.ts` — warns on incomplete criteria before closing (warn-only, never blocks)
+- `src/cli/commands/sessions.ts` — added Intent column (14th), truncated to 30 chars
+- `src/web/app/api/threads/route.ts` — `completionPct` + `launchReady` on every thread in response
+
+**Tests:** 352 unit + 46 Playwright — all green.
+
+**Deferred (non-blocking)**
+- None — all reviewer findings resolved
+
+---
+
 ### Step 9 — Responsive UI, Thread Todos, Priority Card Highlights (2026-05-25) ✅ APPROVED
 **Commits:** `2fb2445` → `a783da0`
 
