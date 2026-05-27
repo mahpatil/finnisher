@@ -3,6 +3,8 @@ import * as p from '@clack/prompts'
 import { createThread, listThreads, overloadWarning } from '../../db/threads.js'
 import type { ThreadState, ThreadOwner } from '../../db/schema.js'
 import { printFocusWarning } from '../ui/format.js'
+import { getAbandonCandidates } from '../ui/abandonCheck.js'
+import { readConfig } from '../../lib/config.js'
 
 export function register(program: Command): void {
   program
@@ -23,6 +25,33 @@ export function register(program: Command): void {
         const warning = overloadWarning(all)
         if (warning) printFocusWarning(warning)
         return
+      }
+
+      const config = readConfig()
+      const stallMs = config.stall_hours * 3600 * 1000
+      const candidates = getAbandonCandidates(listThreads(), stallMs)
+
+      if (candidates.length >= 2) {
+        const opts2 = [
+          ...candidates.map(t => ({
+            value: t.id,
+            label: `${t.title} — last touched ${Math.round((Date.now() - t.updatedAt.getTime()) / 3600000)}h ago`,
+            hint: t.nextAction,
+          })),
+          { value: '__proceed__', label: 'Proceed — add new thread' },
+        ]
+        const pick = await p.select({
+          message: 'Any of these closer to done than your new idea?',
+          options: opts2,
+        })
+        if (p.isCancel(pick) || pick === '__proceed__') {
+          // fall through to the normal add flow
+        } else {
+          const chosen = candidates.find(t => t.id === pick)
+          console.log(`Refocus: finn next ${pick} "<next action>"`)
+          if (chosen) console.log(`  → ${chosen.title}: ${chosen.nextAction}`)
+          return
+        }
       }
 
       p.intro('Add a new thread')
