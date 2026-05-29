@@ -104,6 +104,37 @@ describe('GET /api/threads', () => {
     expect(body.focusWarning?.level).toBe('caution')
     expect(body.focusWarning?.count).toBe(6)
   })
+
+  it('returns null folderName, repoUrl, projectPath when thread has no sessions', async () => {
+    const { threadsRoute } = await setup()
+    const { createThread } = await import('@db/threads')
+    createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    const res = threadsRoute.GET(makeRequest('http://localhost/api/threads'))
+    const body = await res.json() as { threads: Array<{ folderName: unknown; repoUrl: unknown; projectPath: unknown }> }
+    expect(body.threads[0].folderName).toBeNull()
+    expect(body.threads[0].repoUrl).toBeNull()
+    expect(body.threads[0].projectPath).toBeNull()
+  })
+
+  it('populates folderName, repoUrl, projectPath from the latest session', async () => {
+    const { threadsRoute } = await setup()
+    const { createThread } = await import('@db/threads')
+    const { createSession } = await import('@db/sessions')
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    createSession({
+      agent: 'claude_code',
+      startedAt: new Date(),
+      threadId: t.id,
+      folderName: 'my-app',
+      githubUrl: 'https://github.com/org/my-app',
+      projectPath: '/home/user/my-app',
+    })
+    const res = threadsRoute.GET(makeRequest('http://localhost/api/threads'))
+    const body = await res.json() as { threads: Array<{ folderName: string; repoUrl: string; projectPath: string }> }
+    expect(body.threads[0].folderName).toBe('my-app')
+    expect(body.threads[0].repoUrl).toBe('https://github.com/org/my-app')
+    expect(body.threads[0].projectPath).toBe('/home/user/my-app')
+  })
 })
 
 // ── POST /api/threads ──────────────────────────────────────────────────────

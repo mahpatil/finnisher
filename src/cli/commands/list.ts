@@ -78,8 +78,8 @@ export function register(program: Command): void {
       const sessionInfo = getLatestSessionInfoByThreadIds(filtered.map(t => t.id))
 
       const table = new Table({
-        head: ['ID', 'Title', 'State', 'Priority', 'Folder', 'Repo', 'Next Action', 'Updated', '⚠'],
-        colWidths: [12, 28, 10, 10, 14, 18, 32, 12, 14],
+        head: ['ID', 'Title', 'State', 'Priority', 'Owner', 'Folder', 'Repo', 'Next Action', 'Updated', '⚠'],
+        colWidths: [12, 24, 10, 10, 10, 12, 16, 28, 12, 14],
         style: { head: ['cyan'] },
       })
 
@@ -91,18 +91,19 @@ export function register(program: Command): void {
         const isSprint = pct >= SPRINT_THRESHOLD
         const statusBadge = ready ? '[READY]' : isSprint ? '[~DONE]' : stalled ? stalledBadge() : ''
         const info = sessionInfo.get(t.id)
-        const folder = info?.folderName ? truncate(info.folderName, 12) : '—'
+        const folder = info?.folderName ? truncate(info.folderName, 10) : '—'
         const repoName = info?.githubUrl
-          ? truncate(info.githubUrl.replace(/^https?:\/\/[^/]+\/[^/]+\//, ''), 16)
+          ? truncate(info.githubUrl.replace(/^https?:\/\/[^/]+\/[^/]+\//, ''), 14)
           : '—'
         table.push([
           t.id,
-          truncate(t.title, 26),
+          truncate(t.title, 22),
           stateBadge(t.state),
           t.priority,
+          t.owner,
           folder,
           repoName,
-          truncate(t.nextAction, 30),
+          truncate(t.nextAction, 26),
           relativeDate(t.updatedAt),
           statusBadge,
         ])

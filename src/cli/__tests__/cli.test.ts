@@ -144,6 +144,44 @@ describe('finn list', () => {
     const output = spy.mock.calls.map(c => c[0] as string).join('\n')
     expect(output).toContain('9 active threads')
   })
+
+  it('shows Folder and Repo columns populated from the latest session', async () => {
+    const { program, db, sessionDb } = await setupProgram()
+    const t = db.createThread({ title: 'My Project', nextAction: 'x', state: 'open', owner: 'you' })
+    sessionDb.createSession({
+      agent: 'claude_code',
+      startedAt: new Date(),
+      threadId: t.id,
+      folderName: 'my-project',
+      githubUrl: 'https://github.com/org/my-project',
+      projectPath: '/home/user/my-project',
+    })
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'list'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Folder')
+    expect(output).toContain('Repo')
+    expect(output).toContain('my-project')
+  })
+
+  it('shows Owner column', async () => {
+    const { program, db } = await setupProgram()
+    db.createThread({ title: 'T', nextAction: 'x', state: 'open', owner: 'ai_agent' })
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'list'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('Owner')
+    expect(output).toContain('ai_agent')
+  })
+
+  it('shows em dash for Folder and Repo when thread has no sessions', async () => {
+    const { program, db } = await setupProgram()
+    db.createThread({ title: 'No Session Thread', nextAction: 'x', state: 'open', owner: 'you' })
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await program.parseAsync(['node', 'finn', 'list'])
+    const output = spy.mock.calls.map(c => c[0] as string).join('\n')
+    expect(output).toContain('—')
+  })
 })
 
 // ── finn add ───────────────────────────────────────────────────────────────

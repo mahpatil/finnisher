@@ -119,6 +119,87 @@ describe('createSession with repo context fields', () => {
   })
 })
 
+describe('getLatestSessionInfoByThreadIds', () => {
+  it('returns empty map for empty input', async () => {
+    const { getLatestSessionInfoByThreadIds } = await setup()
+    expect(getLatestSessionInfoByThreadIds([])).toEqual(new Map())
+  })
+
+  it('returns folder, repo, and projectPath for a thread with one session', async () => {
+    const { createSession, getLatestSessionInfoByThreadIds } = await setup()
+    const { createThread } = await import('../threads.js')
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    createSession({
+      agent: 'claude_code',
+      startedAt: new Date(),
+      threadId: t.id,
+      folderName: 'finnisher',
+      githubUrl: 'https://github.com/org/finnisher',
+      projectPath: '/home/user/finnisher',
+    })
+    const map = getLatestSessionInfoByThreadIds([t.id])
+    expect(map.get(t.id)).toEqual({
+      folderName: 'finnisher',
+      githubUrl: 'https://github.com/org/finnisher',
+      projectPath: '/home/user/finnisher',
+    })
+  })
+
+  it('returns the most recent session when multiple sessions exist', async () => {
+    const { createSession, getLatestSessionInfoByThreadIds } = await setup()
+    const { createThread } = await import('../threads.js')
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    createSession({
+      agent: 'claude_code',
+      startedAt: new Date(Date.now() - 7200_000),
+      threadId: t.id,
+      folderName: 'old-folder',
+      githubUrl: 'https://github.com/org/old',
+      projectPath: '/old',
+    })
+    createSession({
+      agent: 'claude_code',
+      startedAt: new Date(),
+      threadId: t.id,
+      folderName: 'new-folder',
+      githubUrl: 'https://github.com/org/new',
+      projectPath: '/new',
+    })
+    const map = getLatestSessionInfoByThreadIds([t.id])
+    expect(map.get(t.id)?.folderName).toBe('new-folder')
+    expect(map.get(t.id)?.projectPath).toBe('/new')
+  })
+
+  it('returns null fields for a thread whose session has no location data', async () => {
+    const { createSession, getLatestSessionInfoByThreadIds } = await setup()
+    const { createThread } = await import('../threads.js')
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    createSession({ agent: 'claude_code', startedAt: new Date(), threadId: t.id })
+    const map = getLatestSessionInfoByThreadIds([t.id])
+    expect(map.get(t.id)).toEqual({ folderName: null, githubUrl: null, projectPath: null })
+  })
+
+  it('handles multiple threads and returns each with correct info', async () => {
+    const { createSession, getLatestSessionInfoByThreadIds } = await setup()
+    const { createThread } = await import('../threads.js')
+    const t1 = createThread({ title: 'T1', nextAction: 'N', state: 'open', owner: 'you' })
+    const t2 = createThread({ title: 'T2', nextAction: 'N', state: 'open', owner: 'you' })
+    createSession({ agent: 'claude_code', startedAt: new Date(), threadId: t1.id, folderName: 'alpha', projectPath: '/alpha' })
+    createSession({ agent: 'claude_code', startedAt: new Date(), threadId: t2.id, folderName: 'beta', projectPath: '/beta' })
+    const map = getLatestSessionInfoByThreadIds([t1.id, t2.id])
+    expect(map.get(t1.id)?.folderName).toBe('alpha')
+    expect(map.get(t2.id)?.folderName).toBe('beta')
+  })
+
+  it('returns no entry for a thread with no sessions', async () => {
+    const { getLatestSessionInfoByThreadIds } = await setup()
+    const { createThread } = await import('../threads.js')
+    const t = createThread({ title: 'T', nextAction: 'N', state: 'open', owner: 'you' })
+    const map = getLatestSessionInfoByThreadIds([t.id])
+    expect(map.has(t.id)).toBe(false)
+  })
+})
+
 describe('getOpenSessions', () => {
   it('returns only sessions where endedAt is null', async () => {
     const { createSession, closeSession, getOpenSessions } = await setup()
