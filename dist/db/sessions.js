@@ -42,6 +42,18 @@ export function setSessionIntent(id, intent) {
         throw new Error(`Session not found: ${id}`);
     getDb().update(sessions).set({ intent }).where(eq(sessions.id, id)).run();
 }
+export function getLatestSessionInfoForThread(threadId) {
+    const row = getDb()
+        .select({ folderName: sessions.folderName, githubUrl: sessions.githubUrl, projectPath: sessions.projectPath })
+        .from(sessions)
+        .where(eq(sessions.threadId, threadId))
+        .orderBy(desc(sessions.startedAt))
+        .limit(1)
+        .get();
+    if (!row)
+        return undefined;
+    return { folderName: row.folderName ?? null, githubUrl: row.githubUrl ?? null, projectPath: row.projectPath ?? null };
+}
 export function getLatestSessionInfoByThreadIds(threadIds) {
     if (threadIds.length === 0)
         return new Map();

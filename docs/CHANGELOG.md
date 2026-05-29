@@ -4,6 +4,27 @@
 
 ---
 
+### Hotfix — Thread Location in CLI + Web Dashboard (2026-05-29) ✅ APPROVED WITH NOTES
+**Commits:** `13b6f2c` → `ca34b6d`
+
+**Added**
+- `src/db/sessions.ts` — `getLatestSessionInfoByThreadIds()` batch lookup; `getLatestSessionInfoForThread()` single-thread direct query
+- `src/web/components/ThreadCard.tsx` — folder icon + repo name (truncated, clickable link) shown below thread title on every card
+- `src/web/components/ThreadDetail.tsx` — **Location panel** in right sidebar: full project path + clickable GitHub URL from the most recent session
+- `src/web/app/api/threads/route.ts` — `folderName`, `repoUrl`, `projectPath` fields on `ThreadWithMeta`
+- `src/web/app/api/threads/[id]/route.ts` — same three fields via `getLatestSessionInfoForThread()`
+
+**Changed**
+- `src/cli/commands/list.ts` — `finn list` now shows `Owner`, `Folder`, `Repo` columns alongside existing columns; column widths tuned
+- `src/web/app/threads/page.tsx` — thread selection and state/priority filters are URL-encoded (`?thread=`, `?state=`, `?priority=`) so clicking **Back** preserves the filter context; left-nav "Threads" click always resets to unfiltered list; `<Suspense fallback={null}>` added
+
+**Tests:** 363 unit — all green. No Playwright changes (no new UI flows).
+
+**Deferred (non-blocking)**
+- none — all reviewer notes addressed
+
+---
+
 ### Step 10 — Finish Engine: Launch Gate, Completion Signal, Sprint Candidates, Session Intent, Weekly Summary (2026-05-27) ✅ APPROVED
 **Commits:** `fd30ab7` → `493dafb`
 

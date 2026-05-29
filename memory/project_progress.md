@@ -44,5 +44,9 @@ Summary: `finn list/add/next/done/status/sessions/web/touch` with @clack/prompts
 Commits: `feat/01-core-db`
 Summary: Drizzle ORM + better-sqlite3 schema, CRUD functions, WAL mode.
 
+## Hotfix — Thread Location in CLI + Web Dashboard — ✅ Done (2026-05-29)
+Commits: `13b6f2c` → `ca34b6d`
+Summary: finn list now shows Folder, Repo, Owner columns; ThreadCard shows folder/repo inline; ThreadDetail sidebar shows full project path + clickable GitHub link; Threads page filter state is URL-encoded so Back preserves context; getLatestSessionInfoForThread() replaces the Map round-trip for single-thread lookups; 11 new unit tests added.
+
 ## Next Up
 Step 11 — TBD (define in next /spec)

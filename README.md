@@ -101,7 +101,7 @@ All hooks (Claude Code, Codex, OpenCode, Gemini, git) read this file automatical
 | Command | Description |
 |---|---|
 | `finn setup` | One-time setup, register agent hooks |
-| `finn list` | Show active threads + stalled count |
+| `finn list` | Show active threads with ID, Title, State, Priority, Owner, Folder, Repo, Next Action, and stall badges |
 | `finn list --archived` | Show archived threads |
 | `finn list --state waiting` | Filter by state |
 | `finn add` | Add a thread (interactive or `--title`/`--next`) |
@@ -141,6 +141,12 @@ All hooks (Claude Code, Codex, OpenCode, Gemini, git) read this file automatical
 | `/optimization` | Agent optimisation (coming soon) |
 
 Each route is directly navigable via URL. Dashboard polls every 5 seconds — changes from `finn list` / `finn done` reflect automatically. The focus warning banner appears when active thread count exceeds 5. If a dashboard action fails (network error, invalid state), a brief error notification appears at the bottom of the screen and auto-dismisses after 4 seconds.
+
+Thread state and priority filters are encoded in the URL (`/threads?state=open&priority=now`), so the active filter context is preserved when you navigate into a thread detail and click Back. Clicking **Threads** in the left nav always returns to the unfiltered list.
+
+### Thread detail — Location panel
+
+Clicking any thread card opens a detail view. The right sidebar includes a **Location** panel showing the full project path and a clickable GitHub repository link, pulled from the most recent agent session for that thread. This makes it easy to jump directly to the directory or open the repo from the dashboard.
 
 ### Responsive layout
 

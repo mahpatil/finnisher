@@ -10,6 +10,11 @@ export declare function listSessions(opts?: {
 export declare function getOpenSessions(): Session[];
 export declare function getOpenSessionForPath(projectPath: string): Session | undefined;
 export declare function setSessionIntent(id: string, intent: string): void;
+export declare function getLatestSessionInfoForThread(threadId: string): {
+    folderName: string | null;
+    githubUrl: string | null;
+    projectPath: string | null;
+} | undefined;
 export declare function getLatestSessionInfoByThreadIds(threadIds: string[]): Map<string, {
     folderName: string | null;
     githubUrl: string | null;

@@ -54,6 +54,20 @@ export function setSessionIntent(id: string, intent: string): void {
   getDb().update(sessions).set({ intent }).where(eq(sessions.id, id)).run()
 }
 
+export function getLatestSessionInfoForThread(
+  threadId: string
+): { folderName: string | null; githubUrl: string | null; projectPath: string | null } | undefined {
+  const row = getDb()
+    .select({ folderName: sessions.folderName, githubUrl: sessions.githubUrl, projectPath: sessions.projectPath })
+    .from(sessions)
+    .where(eq(sessions.threadId, threadId))
+    .orderBy(desc(sessions.startedAt))
+    .limit(1)
+    .get()
+  if (!row) return undefined
+  return { folderName: row.folderName ?? null, githubUrl: row.githubUrl ?? null, projectPath: row.projectPath ?? null }
+}
+
 export function getLatestSessionInfoByThreadIds(
   threadIds: string[]
 ): Map<string, { folderName: string | null; githubUrl: string | null; projectPath: string | null }> {

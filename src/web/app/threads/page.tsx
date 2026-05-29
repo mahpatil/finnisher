@@ -35,13 +35,22 @@ const STATE_FILTERS = ['All', 'new', 'open', 'waiting', 'blocked', 'closed', 'ar
 const PRIORITY_FILTERS = ['All', 'now', 'next', 'later', 'out'] as const
 const PRIORITY_LABELS: Record<string, string> = { now: 'NOW', next: 'NEXT', later: 'LATER', out: 'OUT' }
 
+function buildListUrl(opts: { thread?: string; state?: string; priority?: string }): string {
+  const params = new URLSearchParams()
+  if (opts.thread) params.set('thread', opts.thread)
+  if (opts.state && opts.state !== 'All') params.set('state', opts.state)
+  if (opts.priority && opts.priority !== 'All') params.set('priority', opts.priority)
+  const qs = params.toString()
+  return qs ? `/threads?${qs}` : '/threads'
+}
+
 function ThreadsPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const selectedThreadId = searchParams.get('thread')
+  const stateFilter = searchParams.get('state') ?? 'All'
+  const priorityFilter = searchParams.get('priority') ?? 'All'
   const [addOpen, setAddOpen] = useState(false)
-  const [stateFilter, setStateFilter] = useState<string>('All')
-  const [priorityFilter, setPriorityFilter] = useState<string>('All')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const { data: tRes, mutate: mutateThreads } = useSWR<ThreadsResponse>(
@@ -110,7 +119,7 @@ function ThreadsPageInner() {
         <ThreadDetail
           thread={selectedThread}
           sessions={threadSessions}
-          onBack={() => router.push('/threads')}
+          onBack={() => router.push(buildListUrl({ state: stateFilter, priority: priorityFilter }))}
           onUpdatePriority={updatePriority}
         />
       </LayoutShell>
@@ -141,7 +150,7 @@ function ThreadsPageInner() {
             size="small"
             variant={stateFilter === s ? 'filled' : 'outlined'}
             color={stateFilter === s ? 'primary' : 'default'}
-            onClick={() => setStateFilter(s)}
+            onClick={() => router.push(buildListUrl({ state: s, priority: priorityFilter }))}
             sx={{ cursor: 'pointer', fontWeight: stateFilter === s ? 700 : 400 }}
           />
         ))}
@@ -160,7 +169,7 @@ function ThreadsPageInner() {
             size="small"
             variant={priorityFilter === p ? 'filled' : 'outlined'}
             color={priorityFilter === p ? 'primary' : 'default'}
-            onClick={() => setPriorityFilter(p)}
+            onClick={() => router.push(buildListUrl({ state: stateFilter, priority: p }))}
             sx={{ cursor: 'pointer', fontWeight: priorityFilter === p ? 700 : 400 }}
           />
         ))}
@@ -186,7 +195,7 @@ function ThreadsPageInner() {
               onArchive={archiveThread}
               onUnarchive={unarchiveThread}
               onUpdatePriority={updatePriority}
-              onClick={() => router.push(`/threads?thread=${t.id}`)}
+              onClick={() => router.push(buildListUrl({ thread: t.id, state: stateFilter, priority: priorityFilter }))}
             />
           </Grid>
         ))}
@@ -220,7 +229,7 @@ function ThreadsPageInner() {
 
 export default function ThreadsPage() {
   return (
-    <Suspense>
+    <Suspense fallback={null}>
       <ThreadsPageInner />
     </Suspense>
   )

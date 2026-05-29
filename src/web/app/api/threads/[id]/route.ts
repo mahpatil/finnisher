@@ -4,7 +4,7 @@ import { getThread, updateState, updateNextAction, updatePriority, archiveThread
 import { listTodoCounts } from '@db/todos'
 import { computeCompletionPct } from '@db/completionPct'
 import { isLaunchReady } from '@db/launchCriteria'
-import { getLatestSessionInfoByThreadIds } from '@db/sessions'
+import { getLatestSessionInfoForThread } from '@db/sessions'
 import { THREAD_STATES, THREAD_PRIORITIES } from '@db/schema'
 import type { ThreadState, ThreadPriority } from '@db/schema'
 import type { ThreadWithMeta } from '../route.js'
@@ -15,7 +15,7 @@ function serialize(thread: ReturnType<typeof getThread>): ThreadWithMeta {
   if (!thread) throw new Error('Thread not found')
   const counts = listTodoCounts([thread.id])
   const c = counts[thread.id] ?? { done: 0, total: 0 }
-  const info = getLatestSessionInfoByThreadIds([thread.id]).get(thread.id)
+  const info = getLatestSessionInfoForThread(thread.id)
   return {
     id: thread.id,
     title: thread.title,
