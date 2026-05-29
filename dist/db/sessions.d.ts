@@ -10,5 +10,9 @@ export declare function listSessions(opts?: {
 export declare function getOpenSessions(): Session[];
 export declare function getOpenSessionForPath(projectPath: string): Session | undefined;
 export declare function setSessionIntent(id: string, intent: string): void;
+export declare function getLatestSessionInfoByThreadIds(threadIds: string[]): Map<string, {
+    folderName: string | null;
+    githubUrl: string | null;
+}>;
 export declare function backfillNullThreadSessions(projectPath: string, threadId: string): void;
 //# sourceMappingURL=sessions.d.ts.map

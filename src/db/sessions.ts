@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { customAlphabet } from 'nanoid'
 
 const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 10)
@@ -52,6 +52,25 @@ export function setSessionIntent(id: string, intent: string): void {
   const existing = getDb().select().from(sessions).where(eq(sessions.id, id)).get()
   if (!existing) throw new Error(`Session not found: ${id}`)
   getDb().update(sessions).set({ intent }).where(eq(sessions.id, id)).run()
+}
+
+export function getLatestSessionInfoByThreadIds(
+  threadIds: string[]
+): Map<string, { folderName: string | null; githubUrl: string | null }> {
+  if (threadIds.length === 0) return new Map()
+  const rows = getDb()
+    .select({ threadId: sessions.threadId, folderName: sessions.folderName, githubUrl: sessions.githubUrl })
+    .from(sessions)
+    .where(inArray(sessions.threadId, threadIds))
+    .orderBy(desc(sessions.startedAt))
+    .all()
+  const map = new Map<string, { folderName: string | null; githubUrl: string | null }>()
+  for (const row of rows) {
+    if (row.threadId && !map.has(row.threadId)) {
+      map.set(row.threadId, { folderName: row.folderName ?? null, githubUrl: row.githubUrl ?? null })
+    }
+  }
+  return map
 }
 
 export function backfillNullThreadSessions(projectPath: string, threadId: string): void {

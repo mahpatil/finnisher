@@ -4,6 +4,7 @@ import { THREAD_STATES, THREAD_PRIORITIES } from '../../db/schema.js';
 import { stateBadge, stalledBadge, printFocusWarning } from '../ui/format.js';
 import { isLaunchReady } from '../../db/launchCriteria.js';
 import { computeCompletionPct } from '../../db/completionPct.js';
+import { getLatestSessionInfoByThreadIds } from '../../db/sessions.js';
 const SPRINT_THRESHOLD = 0.75;
 const STATE_ORDER = {
     new: 0, open: 1, waiting: 2, blocked: 3, closed: 4, archived: 5,
@@ -66,9 +67,10 @@ export function register(program) {
         const warning = overloadWarning(all);
         if (warning)
             printFocusWarning(warning);
+        const sessionInfo = getLatestSessionInfoByThreadIds(filtered.map(t => t.id));
         const table = new Table({
-            head: ['ID', 'Title', 'State', 'Priority', 'Owner', 'Next Action', 'Updated', '⚠'],
-            colWidths: [12, 32, 10, 10, 10, 37, 12, 14],
+            head: ['ID', 'Title', 'State', 'Priority', 'Folder', 'Repo', 'Next Action', 'Updated', '⚠'],
+            colWidths: [12, 28, 10, 10, 14, 18, 32, 12, 14],
             style: { head: ['cyan'] },
         });
         const sorted = sortThreads(filtered);
@@ -78,13 +80,19 @@ export function register(program) {
             const pct = computeCompletionPct(t.id);
             const isSprint = pct >= SPRINT_THRESHOLD;
             const statusBadge = ready ? '[READY]' : isSprint ? '[~DONE]' : stalled ? stalledBadge() : '';
+            const info = sessionInfo.get(t.id);
+            const folder = info?.folderName ? truncate(info.folderName, 12) : '—';
+            const repoName = info?.githubUrl
+                ? truncate(info.githubUrl.replace(/^https?:\/\/[^/]+\/[^/]+\//, ''), 16)
+                : '—';
             table.push([
                 t.id,
-                truncate(t.title, 30),
+                truncate(t.title, 26),
                 stateBadge(t.state),
                 t.priority,
-                t.owner,
-                truncate(t.nextAction, 35),
+                folder,
+                repoName,
+                truncate(t.nextAction, 30),
                 relativeDate(t.updatedAt),
                 statusBadge,
             ]);

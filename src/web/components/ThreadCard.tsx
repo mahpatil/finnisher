@@ -14,6 +14,8 @@ import SmartToyIcon from '@mui/icons-material/SmartToy'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import UnarchiveIcon from '@mui/icons-material/Unarchive'
+import FolderOpenIcon from '@mui/icons-material/FolderOpen'
+import GitHubIcon from '@mui/icons-material/GitHub'
 import { alpha } from '@mui/material/styles'
 import { NextActionEdit } from './NextActionEdit'
 
@@ -34,6 +36,8 @@ export interface ThreadData {
   lastVelocity?: number
   todoDone?: number
   todoTotal?: number
+  folderName?: string | null
+  repoUrl?: string | null
 }
 
 interface Props {
@@ -101,9 +105,31 @@ export function ThreadCard({ thread, showActions = true, onMarkDone, onSetWaitin
             >
               {thread.title}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: '"JetBrains Mono", monospace' }}>
-              Last Session: 4m ago
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+              {thread.folderName && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <FolderOpenIcon sx={{ fontSize: 11, color: 'text.disabled' }} />
+                  <Typography variant="caption" sx={{ fontFamily: '"JetBrains Mono", monospace', color: 'text.secondary', fontSize: '0.65rem' }}>
+                    {thread.folderName}
+                  </Typography>
+                </Box>
+              )}
+              {thread.repoUrl && (
+                <Box
+                  component="a"
+                  href={thread.repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 0.5, textDecoration: 'none', '&:hover .repo-label': { color: 'primary.main' } }}
+                >
+                  <GitHubIcon sx={{ fontSize: 11, color: 'text.disabled' }} />
+                  <Typography className="repo-label" variant="caption" sx={{ fontFamily: '"JetBrains Mono", monospace', color: 'text.secondary', fontSize: '0.65rem' }}>
+                    {thread.repoUrl.replace(/^https?:\/\/[^/]+\/[^/]+\//, '')}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
             <Typography

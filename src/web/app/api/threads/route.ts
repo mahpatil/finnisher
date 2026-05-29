@@ -4,6 +4,7 @@ import { listThreads, createThread, isStalled, overloadWarning } from '@db/threa
 import { listTodoCounts } from '@db/todos'
 import { computeCompletionPct } from '@db/completionPct'
 import { isLaunchReady } from '@db/launchCriteria'
+import { getLatestSessionInfoByThreadIds } from '@db/sessions'
 import { THREAD_STATES, THREAD_PRIORITIES } from '@db/schema'
 import type { ThreadState, ThreadPriority } from '@db/schema'
 
@@ -27,6 +28,8 @@ export interface ThreadWithMeta {
   todoTotal: number
   completionPct: number
   launchReady: boolean
+  folderName: string | null
+  repoUrl: string | null
 }
 
 export interface ThreadsResponse {
@@ -36,9 +39,11 @@ export interface ThreadsResponse {
 
 function serialize(
   thread: ReturnType<typeof listThreads>[number],
-  counts: Record<string, { done: number; total: number }>
+  counts: Record<string, { done: number; total: number }>,
+  sessionInfoMap?: Map<string, { folderName: string | null; githubUrl: string | null }>
 ): ThreadWithMeta {
   const c = counts[thread.id] ?? { done: 0, total: 0 }
+  const info = sessionInfoMap?.get(thread.id)
   return {
     id: thread.id,
     title: thread.title,
@@ -57,6 +62,8 @@ function serialize(
     todoTotal: c.total,
     completionPct: computeCompletionPct(thread.id),
     launchReady: isLaunchReady(thread.id),
+    folderName: info?.folderName ?? null,
+    repoUrl: info?.githubUrl ?? null,
   }
 }
 
@@ -89,11 +96,12 @@ export function GET(request: Request) {
   }
 
   const counts = listTodoCounts(all.map(t => t.id))
+  const sessionInfoMap = getLatestSessionInfoByThreadIds(all.map(t => t.id))
   const warning = overloadWarning(all)
   const response: ThreadsResponse = {
-    threads: filtered.map(t => serialize(t, counts)),
+    threads: filtered.map(t => serialize(t, counts, sessionInfoMap)),
     focusWarning: warning
-      ? { ...warning, suggestions: warning.suggestions.map(t => serialize(t, counts)) }
+      ? { ...warning, suggestions: warning.suggestions.map(t => serialize(t, counts, sessionInfoMap)) }
       : null,
   }
   return NextResponse.json(response)
