@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -34,8 +35,10 @@ const STATE_FILTERS = ['All', 'new', 'open', 'waiting', 'blocked', 'closed', 'ar
 const PRIORITY_FILTERS = ['All', 'now', 'next', 'later', 'out'] as const
 const PRIORITY_LABELS: Record<string, string> = { now: 'NOW', next: 'NEXT', later: 'LATER', out: 'OUT' }
 
-export default function ThreadsPage() {
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
+function ThreadsPageInner() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const selectedThreadId = searchParams.get('thread')
   const [addOpen, setAddOpen] = useState(false)
   const [stateFilter, setStateFilter] = useState<string>('All')
   const [priorityFilter, setPriorityFilter] = useState<string>('All')
@@ -107,7 +110,7 @@ export default function ThreadsPage() {
         <ThreadDetail
           thread={selectedThread}
           sessions={threadSessions}
-          onBack={() => setSelectedThreadId(null)}
+          onBack={() => router.push('/threads')}
           onUpdatePriority={updatePriority}
         />
       </LayoutShell>
@@ -183,7 +186,7 @@ export default function ThreadsPage() {
               onArchive={archiveThread}
               onUnarchive={unarchiveThread}
               onUpdatePriority={updatePriority}
-              onClick={() => setSelectedThreadId(t.id)}
+              onClick={() => router.push(`/threads?thread=${t.id}`)}
             />
           </Grid>
         ))}
@@ -212,5 +215,13 @@ export default function ThreadsPage() {
         <Alert severity="error" onClose={() => setErrorMsg(null)}>{errorMsg}</Alert>
       </Snackbar>
     </LayoutShell>
+  )
+}
+
+export default function ThreadsPage() {
+  return (
+    <Suspense>
+      <ThreadsPageInner />
+    </Suspense>
   )
 }

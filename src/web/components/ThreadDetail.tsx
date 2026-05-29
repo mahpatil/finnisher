@@ -13,6 +13,8 @@ import InputLabel from '@mui/material/InputLabel'
 import { alpha } from '@mui/material/styles'
 import BoltIcon from '@mui/icons-material/Bolt'
 import WarningIcon from '@mui/icons-material/Warning'
+import FolderOpenIcon from '@mui/icons-material/FolderOpen'
+import GitHubIcon from '@mui/icons-material/GitHub'
 import { ThreadData } from './ThreadCard'
 import { SessionCard, SessionData } from './SessionCard'
 import { TodoSection } from './TodoSection'
@@ -113,6 +115,43 @@ export function ThreadDetail({ thread, sessions, onBack, onUpdatePriority }: Pro
                 </Box>
               </Box>
             </Box>
+
+            {/* Location */}
+            {(thread.folderName || thread.repoUrl || thread.projectPath) && (
+              <Box sx={{ p: 3, bgcolor: alpha('#1A1A1A', 0.4), borderRadius: 2, border: '0.5px solid', borderColor: 'divider' }}>
+                <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 2 }}>Location</Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  {thread.projectPath && (
+                    <Box>
+                      <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mb: 0.5, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Project Path</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
+                        <FolderOpenIcon sx={{ fontSize: 14, color: 'text.secondary', mt: '1px', flexShrink: 0 }} />
+                        <Typography variant="caption" sx={{ fontFamily: '"JetBrains Mono", monospace', color: 'text.primary', fontSize: '0.7rem', wordBreak: 'break-all', lineHeight: 1.5 }}>
+                          {thread.projectPath}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                  {thread.repoUrl && (
+                    <Box>
+                      <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mb: 0.5, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Git Repository</Typography>
+                      <Box
+                        component="a"
+                        href={thread.repoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75, textDecoration: 'none', '&:hover .repo-text': { color: 'primary.main' } }}
+                      >
+                        <GitHubIcon sx={{ fontSize: 14, color: 'text.secondary', mt: '1px', flexShrink: 0 }} />
+                        <Typography className="repo-text" variant="caption" sx={{ fontFamily: '"JetBrains Mono", monospace', color: 'text.secondary', fontSize: '0.7rem', wordBreak: 'break-all', lineHeight: 1.5 }}>
+                          {thread.repoUrl}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            )}
 
             {/* Priority */}
             <Box sx={{ p: 3, bgcolor: alpha('#1A1A1A', 0.4), borderRadius: 2, border: '0.5px solid', borderColor: 'divider' }}>

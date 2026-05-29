@@ -46,7 +46,7 @@ export function getLatestSessionInfoByThreadIds(threadIds) {
     if (threadIds.length === 0)
         return new Map();
     const rows = getDb()
-        .select({ threadId: sessions.threadId, folderName: sessions.folderName, githubUrl: sessions.githubUrl })
+        .select({ threadId: sessions.threadId, folderName: sessions.folderName, githubUrl: sessions.githubUrl, projectPath: sessions.projectPath })
         .from(sessions)
         .where(inArray(sessions.threadId, threadIds))
         .orderBy(desc(sessions.startedAt))
@@ -54,7 +54,7 @@ export function getLatestSessionInfoByThreadIds(threadIds) {
     const map = new Map();
     for (const row of rows) {
         if (row.threadId && !map.has(row.threadId)) {
-            map.set(row.threadId, { folderName: row.folderName ?? null, githubUrl: row.githubUrl ?? null });
+            map.set(row.threadId, { folderName: row.folderName ?? null, githubUrl: row.githubUrl ?? null, projectPath: row.projectPath ?? null });
         }
     }
     return map;

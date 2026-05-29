@@ -30,6 +30,7 @@ export interface ThreadWithMeta {
   launchReady: boolean
   folderName: string | null
   repoUrl: string | null
+  projectPath: string | null
 }
 
 export interface ThreadsResponse {
@@ -64,6 +65,7 @@ function serialize(
     launchReady: isLaunchReady(thread.id),
     folderName: info?.folderName ?? null,
     repoUrl: info?.githubUrl ?? null,
+    projectPath: info?.projectPath ?? null,
   }
 }
 

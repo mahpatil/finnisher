@@ -38,6 +38,7 @@ export interface ThreadData {
   todoTotal?: number
   folderName?: string | null
   repoUrl?: string | null
+  projectPath?: string | null
 }
 
 interface Props {

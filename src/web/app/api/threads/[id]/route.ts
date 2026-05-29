@@ -36,6 +36,7 @@ function serialize(thread: ReturnType<typeof getThread>): ThreadWithMeta {
     launchReady: isLaunchReady(thread.id),
     folderName: info?.folderName ?? null,
     repoUrl: info?.githubUrl ?? null,
+    projectPath: info?.projectPath ?? null,
   }
 }
 
