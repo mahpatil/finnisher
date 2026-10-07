@@ -75,9 +75,9 @@ echo "abc123xyz" > .finn-thread
 Add `.finn-thread` to `.gitignore` — it's personal state, not shared.
 
 ## Development Workflow
-1. Check spec exists in `docs/specs/` — if not, create one with `/opsx:propose`
+1. Check spec exists in `docs/specs/` — if not, create one with `/spec`
 2. Review the spec, then create a feature branch for the work
-3. Implement using TDD: `/opsx:apply <spec-file>`
+3. Implement using TDD: `/coder <spec-file>`
 4. After completing each significant chunk of work, commit and push immediately — do not wait until the end
 5. Run all tests
 6. Review the implemented code
@@ -87,6 +87,19 @@ Add `.finn-thread` to `.gitignore` — it's personal state, not shared.
 ## Principles
 - Always use TDD — write tests first, make them pass, then refactor
 - Write UI tests using Playwright
-- Reduce code duplication — shared logic lives in `src/db/` or `src/cli/ui/`
+- Reduce code duplication — shared logic lives in `src/db/` (data) or `src/cli/ui/format.ts` (output); hook handlers share logic via `src/hooks/common.ts`
 - Think reliability and failure scenarios — every hook must exit 0, every error must be caught and logged
 - Use Chrome (via browser automation) to test UI features yourself before marking them done
+
+## Security Notes
+- DB at `~/.finnisher/db.sqlite` is user-local — no multi-user access, no API auth needed for local web server
+- Thread titles/notes are plaintext by design — nothing sensitive stored
+- Drizzle ORM parameterised queries only — never concatenate user input into raw SQL
+- `finn web` binds to `localhost` only, never `0.0.0.0`
+- Hook errors log to `~/.finnisher/hook.log`; never log to stdout in hooks (corrupts agent output)
+
+## TypeScript
+No `any` — use `unknown` + narrowing at boundaries. No type assertions except at validated parse boundaries (e.g. `JSON.parse` result).
+
+## Releases
+Commits drive semantic-release (versioning + CHANGELOG) — never manually bump `package.json` version. Run `npm audit` before each release; block on high/critical.
